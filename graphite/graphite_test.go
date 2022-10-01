@@ -2,11 +2,11 @@ package graphite
 
 import (
 	"bufio"
-	"bytes"
 	"net"
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -18,19 +18,23 @@ func floatEquals(a, b float64) bool {
 }
 
 func ExampleGraphite() {
-	go Graphite(metrics.DefaultRegistry, 1*time.Second, "some.prefix", "127.0.0.1:2003")
+	g := New(1*time.Second, "some.prefix", "127.0.0.1:2003")
+	g.Start(metrics.DefaultRegistry)
+	g.Stop()
 }
 
 func ExampleWithConfig() {
-	go WithConfig(&Config{
+	g := WithConfig(&Config{
 		Host:          "127.0.0.1:2003",
 		FlushInterval: 1 * time.Second,
 		DurationUnit:  time.Millisecond,
 		Percentiles:   []float64{0.5, 0.75, 0.99, 0.999},
-	}, metrics.DefaultRegistry)
+	})
+	g.Start(metrics.DefaultRegistry)
+	g.Stop()
 }
 
-func NewTestServer(t *testing.T, prefix string) (map[string]float64, net.Listener, metrics.Registry, *Config, *sync.WaitGroup) {
+func newTestServer(t *testing.T, prefix string) (map[string]float64, net.Listener, metrics.Registry, *Config, *sync.WaitGroup) {
 	res := make(map[string]float64)
 
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
@@ -38,8 +42,10 @@ func NewTestServer(t *testing.T, prefix string) (map[string]float64, net.Listene
 		t.Fatal("could not start dummy server:", err)
 	}
 
-	var wg sync.WaitGroup
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		for {
 			var conn net.Conn
 			conn, err = ln.Accept()
@@ -60,7 +66,6 @@ func NewTestServer(t *testing.T, prefix string) (map[string]float64, net.Listene
 				res[parts[0]] = res[parts[0]] + i
 				line, err = r.ReadString('\n')
 			}
-			wg.Done()
 			conn.Close()
 		}
 	}()
@@ -68,19 +73,68 @@ func NewTestServer(t *testing.T, prefix string) (map[string]float64, net.Listene
 	r := metrics.NewRegistry()
 
 	c := &Config{
-		Host:          ln.Addr().String(),
-		FlushInterval: 10 * time.Millisecond,
-		DurationUnit:  time.Millisecond,
-		Percentiles:   []float64{0.5, 0.75, 0.99, 0.999},
-		Prefix:        prefix,
+		Host:           ln.Addr().String(),
+		FlushInterval:  10 * time.Millisecond,
+		DurationUnit:   time.Millisecond,
+		ConnectTimeout: time.Second,
+		Timeout:        time.Second,
+		Percentiles:    []float64{0.5, 0.75, 0.99, 0.999},
+		Prefix:         prefix,
 	}
 
-	return res, ln, r, c, &wg
+	return res, ln, r, c, wg
+}
+
+func newBenchServer(b *testing.B, prefix string) (*int64, net.Listener, metrics.Registry, *Config, *sync.WaitGroup) {
+	count := new(int64)
+
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		b.Fatal("could not start dummy server:", err)
+	}
+
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			var conn net.Conn
+			conn, err = ln.Accept()
+			if err != nil {
+				if strings.Contains(err.Error(), "use of closed network connection") {
+					return
+				}
+				b.Error("dummy server error", err)
+			}
+			buf := make([]byte, 64*1024)
+			for {
+				n, err := conn.Read(buf)
+				if err != nil {
+					break
+				}
+				atomic.AddInt64(count, int64(n))
+			}
+			conn.Close()
+		}
+	}()
+
+	r := metrics.NewRegistry()
+
+	c := &Config{
+		Host:           ln.Addr().String(),
+		FlushInterval:  10 * time.Millisecond,
+		DurationUnit:   time.Millisecond,
+		ConnectTimeout: time.Second,
+		Timeout:        time.Second,
+		Percentiles:    []float64{0.5, 0.75, 0.99, 0.999},
+		Prefix:         prefix,
+	}
+
+	return count, ln, r, c, wg
 }
 
 func TestWrites(t *testing.T) {
-	res, l, r, c, wg := NewTestServer(t, "foobar")
-	defer l.Close()
+	res, l, r, c, wg := newTestServer(t, "foobar")
 
 	metrics.GetOrRegisterCounter("counter", r).Inc(2)
 
@@ -100,8 +154,10 @@ func TestWrites(t *testing.T) {
 	metrics.GetOrRegisterTimer("timer", r).Update(time.Second * 2)
 	metrics.GetOrRegisterTimer("timer", r).Update(time.Second * 1)
 
-	wg.Add(1)
-	Once(c, r)
+	if err := Once(c, r); err != nil {
+		t.Error(err)
+	}
+	l.Close()
 	wg.Wait()
 
 	// counter
@@ -200,143 +256,200 @@ func TestWrites(t *testing.T) {
 }
 
 func BenchmarkCounter(b *testing.B) {
-	cfg := &Config{
-		FlushInterval: time.Minute,
-		DurationUnit:  time.Millisecond,
-		Prefix:        "test",
-		Percentiles:   []float64{0.5, 0.75, 0.99, 0.999},
-	}
-	buf := make([]byte, 4096)
-	wb := bytes.NewBuffer(buf)
-	w := bufio.NewWriter(wb)
+	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	c := metrics.NewCounter()
-	metrics.Register("foo", c)
+	c := metrics.GetOrRegisterCounter("foo", r)
 
-	r := metrics.DefaultRegistry
+	graphite := WithConfig(cfg)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		c.Inc(1)
-		graphiteSend(cfg, r, w)
+		if err := graphite.send(r); err != nil {
+			b.Fatal(err)
+		}
 	}
+	graphite.Close()
+	b.StopTimer()
+	l.Close()
+	wg.Wait()
 }
 
 func BenchmarkGauge(b *testing.B) {
-	cfg := &Config{
-		FlushInterval: time.Minute,
-		DurationUnit:  time.Millisecond,
-		Prefix:        "test",
-		Percentiles:   []float64{0.5, 0.75, 0.99, 0.999},
-	}
-	buf := make([]byte, 4096)
-	wb := bytes.NewBuffer(buf)
-	w := bufio.NewWriter(wb)
+	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	g := metrics.NewGauge()
-	metrics.Register("bar", g)
+	g := metrics.GetOrRegisterGauge("bar", r)
 	g.Update(47)
 
-	r := metrics.DefaultRegistry
+	graphite := WithConfig(cfg)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		g.Update(1)
-		graphiteSend(cfg, r, w)
+		if err := graphite.send(r); err != nil {
+			b.Fatal(err)
+		}
 	}
+	graphite.Close()
+	b.StopTimer()
+	l.Close()
+	wg.Wait()
 }
 
 func BenchmarkGaugeFloat64(b *testing.B) {
-	cfg := &Config{
-		FlushInterval: time.Minute,
-		DurationUnit:  time.Millisecond,
-		Prefix:        "test",
-		Percentiles:   []float64{0.5, 0.75, 0.99, 0.999},
-	}
-	buf := make([]byte, 4096)
-	wb := bytes.NewBuffer(buf)
-	w := bufio.NewWriter(wb)
+	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	g := metrics.NewGaugeFloat64()
-	metrics.Register("bar", g)
+	g := metrics.GetOrRegisterGaugeFloat64("bar", r)
 	g.Update(47)
 
-	r := metrics.DefaultRegistry
+	graphite := WithConfig(cfg)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		g.Update(1.1)
-		graphiteSend(cfg, r, w)
+		if err := graphite.send(r); err != nil {
+			b.Fatal(err)
+		}
 	}
+	graphite.Close()
+	b.StopTimer()
+	l.Close()
+	wg.Wait()
 }
 
 func BenchmarkHistogram(b *testing.B) {
-	cfg := &Config{
-		FlushInterval: time.Minute,
-		DurationUnit:  time.Millisecond,
-		Prefix:        "test",
-		Percentiles:   []float64{0.5, 0.75, 0.99, 0.999},
-	}
-	buf := make([]byte, 4096)
-	wb := bytes.NewBuffer(buf)
-	w := bufio.NewWriter(wb)
+	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
 	s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
-	h := metrics.NewHistogram(s)
-	metrics.Register("baz", h)
+	h := metrics.GetOrRegisterHistogram("baz", r, s)
 
-	r := metrics.DefaultRegistry
+	graphite := WithConfig(cfg)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		h.Update(int64(i))
-		graphiteSend(cfg, r, w)
+		if err := graphite.send(r); err != nil {
+			b.Fatal(err)
+		}
 	}
+	graphite.Close()
+	b.StopTimer()
+	l.Close()
+	wg.Wait()
 }
 
 func BenchmarkMeter(b *testing.B) {
-	cfg := &Config{
-		FlushInterval: time.Minute,
-		DurationUnit:  time.Millisecond,
-		Prefix:        "test",
-		Percentiles:   []float64{0.5, 0.75, 0.99, 0.999},
-	}
-	buf := make([]byte, 4096)
-	wb := bytes.NewBuffer(buf)
-	w := bufio.NewWriter(wb)
+	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	m := metrics.NewMeter()
-	metrics.Register("quux", m)
+	m := metrics.GetOrRegisterMeter("quux", r)
 
-	r := metrics.DefaultRegistry
+	graphite := WithConfig(cfg)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		m.Mark(47)
-		graphiteSend(cfg, r, w)
+		if err := graphite.send(r); err != nil {
+			b.Fatal(err)
+		}
 	}
+	graphite.Close()
+	b.StopTimer()
+	l.Close()
+	wg.Wait()
 }
 
 func BenchmarkTimer(b *testing.B) {
-	cfg := &Config{
-		FlushInterval: time.Minute,
-		DurationUnit:  time.Millisecond,
-		Prefix:        "test",
-		Percentiles:   []float64{0.5, 0.75, 0.99, 0.999},
-	}
-	buf := make([]byte, 4096)
-	wb := bytes.NewBuffer(buf)
-	w := bufio.NewWriter(wb)
+	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	t := metrics.NewTimer()
-	metrics.Register("bang", t)
+	t := metrics.GetOrRegisterTimer("bang", r)
 	t.Time(func() {})
 
-	r := metrics.DefaultRegistry
+	graphite := WithConfig(cfg)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		t.Update(47)
-		graphiteSend(cfg, r, w)
+		if err := graphite.send(r); err != nil {
+			b.Fatal(err)
+		}
 	}
+	graphite.Close()
+	b.StopTimer()
+	l.Close()
+	wg.Wait()
+}
+
+func BenchmarkAll(b *testing.B) {
+	_, l, r, cfg, wg := newBenchServer(b, "foobar")
+
+	c := metrics.GetOrRegisterCounter("foo", r)
+
+	g := metrics.GetOrRegisterGauge("bar", r)
+	g.Update(47)
+
+	gf := metrics.GetOrRegisterGaugeFloat64("barf", r)
+	gf.Update(47)
+
+	s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
+	h := metrics.GetOrRegisterHistogram("baz", r, s)
+
+	t := metrics.GetOrRegisterTimer("bang", r)
+	t.Time(func() {})
+
+	m := metrics.GetOrRegisterMeter("quux", r)
+
+	graphite := WithConfig(cfg)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		c.Inc(1)
+		g.Update(1)
+		gf.Update(1.1)
+		h.Update(int64(i))
+		t.Update(47)
+		m.Mark(47)
+		if err := graphite.send(r); err != nil {
+			b.Fatal(err)
+		}
+	}
+	graphite.Close()
+	b.StopTimer()
+	l.Close()
+	wg.Wait()
+}
+
+func BenchmarkOnce(b *testing.B) {
+	_, l, r, cfg, wg := newBenchServer(b, "foobar")
+
+	c := metrics.GetOrRegisterCounter("foo", r)
+
+	g := metrics.GetOrRegisterGauge("bar", r)
+	g.Update(47)
+
+	gf := metrics.GetOrRegisterGaugeFloat64("barf", r)
+	gf.Update(47)
+
+	s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
+	h := metrics.GetOrRegisterHistogram("baz", r, s)
+
+	t := metrics.GetOrRegisterTimer("bang", r)
+	t.Time(func() {})
+
+	m := metrics.GetOrRegisterMeter("quux", r)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		c.Inc(1)
+		g.Update(1)
+		gf.Update(1.1)
+		h.Update(int64(i))
+		t.Update(47)
+		m.Mark(47)
+		if err := Once(cfg, r); err != nil {
+			b.Fatal(err)
+		}
+	}
+	b.StopTimer()
+	l.Close()
+	wg.Wait()
 }
