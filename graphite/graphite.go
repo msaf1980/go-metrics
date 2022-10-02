@@ -1,6 +1,7 @@
 package graphite
 
 import (
+	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -54,10 +55,22 @@ func setDefaults(c *Config) {
 	}
 }
 
+func loggerSucces() {
+	log.Printf("graphite: success")
+}
+
+func loggerError(err error) {
+	log.Printf("graphite: %v", err)
+}
+
 type Graphite struct {
 	c    *Config
 	conn net.Conn
 	buf  stringutils.Builder
+
+	loggerSuccess func()
+	loggerError   func(error)
+
 	stop chan struct{}
 	wg   sync.WaitGroup
 }
@@ -75,11 +88,19 @@ func New(d time.Duration, prefix string, host string) *Graphite {
 	})
 }
 
+func newGraphite(c *Config) *Graphite {
+	setDefaults(c)
+	return &Graphite{
+		c:             c,
+		loggerSuccess: loggerSucces,
+		loggerError:   loggerError,
+	}
+}
+
 // WithConfig is a blocking exporter function just like Graphite,
 // but it takes a GraphiteConfig instead.
 func WithConfig(c *Config) *Graphite {
-	setDefaults(c)
-	g := &Graphite{c: c}
+	g := newGraphite(c)
 	g.buf.Grow(c.BufSize)
 	return g
 }
@@ -88,18 +109,26 @@ func WithConfig(c *Config) *Graphite {
 // non-nil error on failed connections. This can be used in a loop
 // similar to GraphiteWithConfig for custom error handling.
 func Once(c *Config, r metrics.Registry) error {
-	setDefaults(c)
-	g := &Graphite{c: c}
+	g := newGraphite(c)
 	g.buf.Grow(c.BufSize)
 	err := g.send(r)
 	g.Close()
 	return err
 }
 
+func (g *Graphite) SetLoggerSucces(f func()) {
+	g.loggerSuccess = f
+}
+
+func (g *Graphite) SetLoggerError(f func(error)) {
+	g.loggerError = f
+}
+
 func (g *Graphite) Start(r metrics.Registry) {
 	g.wg.Add(1)
 	g.stop = make(chan struct{})
 	go func() {
+		var lastErr bool
 		var err error
 		defer g.wg.Done()
 		t := time.NewTicker(g.c.FlushInterval)
@@ -114,8 +143,14 @@ func (g *Graphite) Start(r metrics.Registry) {
 				break LOOP
 			}
 		}
-		if err = g.Close(); err != nil {
-			log.Println(err)
+		if err = g.Close(); err == nil {
+			if lastErr {
+				lastErr = false
+				g.loggerSuccess()
+			}
+		} else if !lastErr {
+			lastErr = true
+			g.loggerError(err)
 		}
 	}()
 }
@@ -152,9 +187,9 @@ func (g *Graphite) writeIntMetric(name, postfix string, v, ts int64) (err error)
 	}
 	g.buf.WriteString(name)
 	g.buf.WriteString(postfix)
-	g.buf.WriteString(strconv.FormatInt(v, 10))
+	g.buf.WriteInt(v, 10)
 	g.buf.WriteRune(' ')
-	g.buf.WriteString(strconv.FormatInt(ts, 10))
+	g.buf.WriteInt(ts, 10)
 	g.buf.WriteRune('\n')
 
 	if g.c.BufSize <= g.buf.Len() {
@@ -170,9 +205,9 @@ func (g *Graphite) writeFloatMetric(name, postfix string, v float64, ts int64) (
 	}
 	g.buf.WriteString(name)
 	g.buf.WriteString(postfix)
-	g.buf.WriteString(strconv.FormatFloat(v, 'f', 2, 64))
+	g.buf.WriteFloat(v, 'f', 2, 64)
 	g.buf.WriteRune(' ')
-	g.buf.WriteString(strconv.FormatInt(ts, 10))
+	g.buf.WriteInt(ts, 10)
 	g.buf.WriteRune('\n')
 
 	if g.c.BufSize <= g.buf.Len() {
@@ -223,10 +258,10 @@ func (g *Graphite) send(r metrics.Registry) error {
 			g.writeFloatMetric(name, ".count_ps ", float64(count)/flushSeconds, now)
 		case metrics.Gauge:
 			// fmt.Fprintf(w, "%s.%s.value %d %d\n", c.Prefix, name, metric.Value(), now)
-			g.writeIntMetric(name, ".value ", metric.Value(), now)
+			g.writeIntMetric(name, " ", metric.Value(), now)
 		case metrics.GaugeFloat64:
 			// fmt.Fprintf(w, "%s.%s.value %f %d\n", c.Prefix, name, metric.Value(), now)
-			g.writeFloatMetric(name, ".value ", metric.Value(), now)
+			g.writeFloatMetric(name, " ", metric.Value(), now)
 		case metrics.Histogram:
 			h := metric.Snapshot()
 			ps := h.Percentiles(g.c.Percentiles)
@@ -287,7 +322,7 @@ func (g *Graphite) send(r metrics.Registry) error {
 			// fmt.Fprintf(w, "%s.%s.mean-rate %.2f %d\n", c.Prefix, name, t.RateMean(), now)
 			g.writeFloatMetric(name, ".mean-rate ", t.RateMean(), now)
 		default:
-			log.Printf("unable to record metric of type %T\n", i)
+			g.loggerError(fmt.Errorf("unable to record metric of type %T", i))
 		}
 	})
 	return g.flush()

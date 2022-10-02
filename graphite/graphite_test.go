@@ -134,12 +134,15 @@ func newBenchServer(b *testing.B, prefix string) (*int64, net.Listener, metrics.
 }
 
 func TestWrites(t *testing.T) {
+	length := 0
 	res, l, r, c, wg := newTestServer(t, "foobar")
 
 	metrics.GetOrRegisterCounter("counter", r).Inc(2)
+	length += 2
 
 	metrics.GetOrRegisterGauge("gauge", r).Update(3)
 	metrics.GetOrRegisterGaugeFloat64("gauge_float", r).Update(2.1)
+	length += 2
 
 	// TODO: Use a mock meter rather than wasting 10s to get a QPS.
 	for i := 0; i < 10*4; i++ {
@@ -147,12 +150,14 @@ func TestWrites(t *testing.T) {
 		// metrics.GetOrRegisterHistogram("histogram", r, metrics.NewUniformSample(100)).Update(1)
 		time.Sleep(200 * time.Millisecond)
 	}
+	length += 5 + 4
 
 	metrics.GetOrRegisterTimer("timer", r).Update(time.Second * 5)
 	metrics.GetOrRegisterTimer("timer", r).Update(time.Second * 4)
 	metrics.GetOrRegisterTimer("timer", r).Update(time.Second * 3)
 	metrics.GetOrRegisterTimer("timer", r).Update(time.Second * 2)
 	metrics.GetOrRegisterTimer("timer", r).Update(time.Second * 1)
+	length += 10
 
 	if err := Once(c, r); err != nil {
 		t.Error(err)
@@ -160,12 +165,24 @@ func TestWrites(t *testing.T) {
 	l.Close()
 	wg.Wait()
 
+	if len(res) != length {
+		t.Errorf("want %d metrics, got %d", length, len(res))
+	}
+
 	// counter
 	if expected, found := 2.0, res["foobar.counter.count"]; !floatEquals(found, expected) {
 		t.Error("bad value foobar.counter.count:", expected, found)
 	}
 	if expected, found := 200.0, res["foobar.counter.count_ps"]; !floatEquals(found, expected) {
 		t.Error("bad value foobar.counter.count:", expected, found)
+	}
+
+	// gauge
+	if expected, found := 3.0, res["foobar.gauge"]; !floatEquals(found, expected) {
+		t.Error("bad value foobar.gauge:", expected, found)
+	}
+	if expected, found := 2.1, res["foobar.gauge_float"]; !floatEquals(found, expected) {
+		t.Error("bad value foobar.gauge_float:", expected, found)
 	}
 
 	// meter

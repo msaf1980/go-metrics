@@ -6,6 +6,8 @@ Based on `https://github.com/rcrowley/go-metrics`
 Main changes:
 1. Reduce alocations for better perfomance
 2. Read-lock during Registry.Each iterator (for avoid copy registry storage)
+3. Don't append ".value" postfix and Gauge and GaugeFloat64
+4. modified graphite client
 
 Documentation: <http://godoc.org/github.com/msaf1980/go-metrics>.
 
