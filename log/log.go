@@ -37,8 +37,8 @@ func LogScaled(r metrics.Registry, freq time.Duration, scale time.Duration, l Lo
 // using the given logger. Print timings in `scale` units (eg time.Millisecond) rather
 // than nanos.
 func LogScaledOnCue(r metrics.Registry, ch chan interface{}, scale time.Duration, l Logger) {
-	du := float64(scale)
-	duSuffix := scale.String()[1:]
+	// du := float64(scale)
+	// duSuffix := scale.String()[1:]
 
 	for range ch {
 		r.Each(func(name, tags string, i interface{}) {
@@ -52,32 +52,32 @@ func LogScaledOnCue(r metrics.Registry, ch chan interface{}, scale time.Duration
 			case metrics.Healthcheck:
 				metric.Check()
 				l.Printf("healthcheck %s%s error: %v\n", name, tags, metric.Error())
-			case metrics.Histogram:
-				h := metric.Snapshot()
-				ps := h.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999})
-				l.Printf("histogram %s%s  count: %9d min: %9d max: %9d mean: %9d stddev: %12.2f "+
-					"median: %12.2f 75%%: %12.2f 95%%: %12.2f 99%%: %12.2f 99.9%%: %12.2f\n",
-					name, tags, h.Count(), h.Min(), h.Max(), h.Mean(), h.StdDev(),
-					ps[0], ps[1], ps[2], ps[3], ps[4],
-				)
-			case metrics.Meter:
-				m := metric.Snapshot()
-				l.Printf("meter %s%s  count: %9d 1-min rate: %12.2f 5-min rate: %12.2f 15-min rate: %12.2f mean rate: %12.2f\n",
-					name, tags, m.Count(), m.Rate1(), m.Rate5(), m.Rate15(), m.RateMean(),
-				)
-			case metrics.Timer:
-				t := metric.Snapshot()
-				ps := t.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999})
-				l.Printf("timer %s%s  count: %9d min: %12.2f%s max: %12.2f%s mean: %12.2f%s stddev: %12.2f%s "+
-					"median: %12.2f%s 75%%: %12.2f%s 95%%: %12.2f%s 99%%: %12.2f%s 99.9%%: %12.2f%s "+
-					"mean rate: %12.2f\n",
-					// " 1-min rate: %12.2f 5-min rate: %12.2 15-min rate: %12.2f\n",
-					name, tags, t.Count(), float64(t.Min())/du, duSuffix, float64(t.Max())/du, duSuffix,
-					t.Mean()/du, duSuffix, t.StdDev()/du, duSuffix,
-					ps[0]/du, duSuffix, ps[1]/du, duSuffix, ps[2]/du, duSuffix, ps[3]/du, duSuffix, ps[4]/du, duSuffix,
-					t.RateMean(),
-					// t.Rate1(), t.Rate5(), t.Rate15(),
-				)
+				// case metrics.Histogram:
+				// 	h := metric.Snapshot()
+				// 	ps := h.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999})
+				// 	l.Printf("histogram %s%s  count: %9d min: %9d max: %9d mean: %9d stddev: %12.2f "+
+				// 		"median: %12.2f 75%%: %12.2f 95%%: %12.2f 99%%: %12.2f 99.9%%: %12.2f\n",
+				// 		name, tags, h.Count(), h.Min(), h.Max(), h.Mean(), h.StdDev(),
+				// 		ps[0], ps[1], ps[2], ps[3], ps[4],
+				// 	)
+				// case metrics.Meter:
+				// 	m := metric.Snapshot()
+				// 	l.Printf("meter %s%s  count: %9d 1-min rate: %12.2f 5-min rate: %12.2f 15-min rate: %12.2f mean rate: %12.2f\n",
+				// 		name, tags, m.Count(), m.Rate1(), m.Rate5(), m.Rate15(), m.RateMean(),
+				// 	)
+				// case metrics.Timer:
+				// 	t := metric.Snapshot()
+				// 	ps := t.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999})
+				// 	l.Printf("timer %s%s  count: %9d min: %12.2f%s max: %12.2f%s mean: %12.2f%s stddev: %12.2f%s "+
+				// 		"median: %12.2f%s 75%%: %12.2f%s 95%%: %12.2f%s 99%%: %12.2f%s 99.9%%: %12.2f%s "+
+				// 		"mean rate: %12.2f\n",
+				// 		// " 1-min rate: %12.2f 5-min rate: %12.2 15-min rate: %12.2f\n",
+				// 		name, tags, t.Count(), float64(t.Min())/du, duSuffix, float64(t.Max())/du, duSuffix,
+				// 		t.Mean()/du, duSuffix, t.StdDev()/du, duSuffix,
+				// 		ps[0]/du, duSuffix, ps[1]/du, duSuffix, ps[2]/du, duSuffix, ps[3]/du, duSuffix, ps[4]/du, duSuffix,
+				// 		t.RateMean(),
+				// 		// t.Rate1(), t.Rate5(), t.Rate15(),
+				// 	)
 			}
 		})
 	}

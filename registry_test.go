@@ -233,19 +233,19 @@ func TestRegistryGetOrRegisterWithLazyInstantiation(t *testing.T) {
 	}
 }
 
-func TestRegistryUnregister(t *testing.T) {
-	l := len(arbiter.meters)
-	r := NewRegistry()
-	r.Register("foo", NewCounter())
-	r.Register("bar", NewMeter())
-	r.Register("baz", NewTimer())
-	if len(arbiter.meters) != l+2 {
-		t.Errorf("arbiter.meters: %d != %d\n", l+2, len(arbiter.meters))
-	}
-	r.Unregister("foo")
-	r.Unregister("bar")
-	r.Unregister("baz")
-	if len(arbiter.meters) != l {
-		t.Errorf("arbiter.meters: %d != %d\n", l+2, len(arbiter.meters))
-	}
-}
+// func TestRegistryUnregister(t *testing.T) {
+// 	l := len(arbiter.meters)
+// 	r := NewRegistry()
+// 	r.Register("foo", NewCounter())
+// 	r.Register("bar", NewMeter())
+// 	r.Register("baz", NewTimer())
+// 	if len(arbiter.meters) != l+2 {
+// 		t.Errorf("arbiter.meters: %d != %d\n", l+2, len(arbiter.meters))
+// 	}
+// 	r.Unregister("foo")
+// 	r.Unregister("bar")
+// 	r.Unregister("baz")
+// 	if len(arbiter.meters) != l {
+// 		t.Errorf("arbiter.meters: %d != %d\n", l+2, len(arbiter.meters))
+// 	}
+// }

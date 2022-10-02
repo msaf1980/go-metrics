@@ -13,10 +13,10 @@ func BenchmarkMetrics(b *testing.B) {
 	c := NewRegisteredCounter("counter", r)
 	g := NewRegisteredGauge("gauge", r)
 	gf := NewRegisteredGaugeFloat64("gaugefloat64", r)
-	h := NewRegisteredHistogram("histogram", r, NewUniformSample(100))
-	m := NewRegisteredMeter("meter", r)
-	t := NewRegisteredTimer("timer", r)
-	RegisterDebugGCStats(r)
+	// h := NewRegisteredHistogram("histogram", r, NewUniformSample(100))
+	// m := NewRegisteredMeter("meter", r)
+	// t := NewRegisteredTimer("timer", r)
+	// RegisterDebugGCStats(r)
 	RegisterRuntimeMemStats(r)
 	b.ResetTimer()
 	ch := make(chan bool)
@@ -51,7 +51,7 @@ func BenchmarkMetrics(b *testing.B) {
 				//log.Println("done CaptureRuntimeMemStats")
 				return
 			default:
-				CaptureRuntimeMemStatsOnce(r)
+				CaptureRuntimeMemStatsOnce()
 			}
 		}
 	}()
@@ -85,9 +85,9 @@ func BenchmarkMetrics(b *testing.B) {
 				c.Inc(1)
 				g.Update(int64(i))
 				gf.Update(float64(i))
-				h.Update(int64(i))
-				m.Mark(1)
-				t.Update(1)
+				// h.Update(int64(i))
+				// m.Mark(1)
+				// t.Update(1)
 			}
 			//log.Println("done", i)
 		}(i)
@@ -107,12 +107,12 @@ func Example() {
 	c.Inc(17)
 
 	// Threadsafe registration
-	t := GetOrRegisterTimer("db.get.latency", nil)
-	t.Time(func() {})
-	t.Update(1)
+	// t := GetOrRegisterTimer("db.get.latency", nil)
+	// t.Time(func() {})
+	// t.Update(1)
 
 	fmt.Println(c.Count())
-	fmt.Println(t.Min())
+	// fmt.Println(t.Min())
 	// Output: 17
 	// 1
 }

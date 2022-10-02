@@ -91,64 +91,64 @@ func (exp *exp) publishGaugeFloat64(name string, metric metrics.GaugeFloat64) {
 	exp.getFloat(name).Set(metric.Value())
 }
 
-func (exp *exp) publishHistogram(name string, metric metrics.Histogram) {
-	h := metric.Snapshot()
-	ps := h.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999})
-	exp.getInt(name + ".count").Set(h.Count())
-	exp.getFloat(name + ".min").Set(float64(h.Min()))
-	exp.getFloat(name + ".max").Set(float64(h.Max()))
-	exp.getFloat(name + ".mean").Set(float64(h.Mean()))
-	exp.getFloat(name + ".std-dev").Set(float64(h.StdDev()))
-	exp.getFloat(name + ".50-percentile").Set(float64(ps[0]))
-	exp.getFloat(name + ".75-percentile").Set(float64(ps[1]))
-	exp.getFloat(name + ".95-percentile").Set(float64(ps[2]))
-	exp.getFloat(name + ".99-percentile").Set(float64(ps[3]))
-	exp.getFloat(name + ".999-percentile").Set(float64(ps[4]))
-}
+// func (exp *exp) publishHistogram(name string, metric metrics.Histogram) {
+// 	h := metric.Snapshot()
+// 	ps := h.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999})
+// 	exp.getInt(name + ".count").Set(h.Count())
+// 	exp.getFloat(name + ".min").Set(float64(h.Min()))
+// 	exp.getFloat(name + ".max").Set(float64(h.Max()))
+// 	exp.getFloat(name + ".mean").Set(float64(h.Mean()))
+// 	exp.getFloat(name + ".std-dev").Set(float64(h.StdDev()))
+// 	exp.getFloat(name + ".50-percentile").Set(float64(ps[0]))
+// 	exp.getFloat(name + ".75-percentile").Set(float64(ps[1]))
+// 	exp.getFloat(name + ".95-percentile").Set(float64(ps[2]))
+// 	exp.getFloat(name + ".99-percentile").Set(float64(ps[3]))
+// 	exp.getFloat(name + ".999-percentile").Set(float64(ps[4]))
+// }
 
-func (exp *exp) publishMeter(name string, metric metrics.Meter) {
-	m := metric.Snapshot()
-	exp.getInt(name + ".count").Set(m.Count())
-	exp.getFloat(name + ".one-minute").Set(float64(m.Rate1()))
-	exp.getFloat(name + ".five-minute").Set(float64(m.Rate5()))
-	exp.getFloat(name + ".fifteen-minute").Set(float64((m.Rate15())))
-	exp.getFloat(name + ".mean").Set(float64(m.RateMean()))
-}
+// func (exp *exp) publishMeter(name string, metric metrics.Meter) {
+// 	m := metric.Snapshot()
+// 	exp.getInt(name + ".count").Set(m.Count())
+// 	exp.getFloat(name + ".one-minute").Set(float64(m.Rate1()))
+// 	exp.getFloat(name + ".five-minute").Set(float64(m.Rate5()))
+// 	exp.getFloat(name + ".fifteen-minute").Set(float64((m.Rate15())))
+// 	exp.getFloat(name + ".mean").Set(float64(m.RateMean()))
+// }
 
-func (exp *exp) publishTimer(name string, metric metrics.Timer) {
-	t := metric.Snapshot()
-	ps := t.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999})
-	exp.getInt(name + ".count").Set(t.Count())
-	exp.getFloat(name + ".min").Set(float64(t.Min()))
-	exp.getFloat(name + ".max").Set(float64(t.Max()))
-	exp.getFloat(name + ".mean").Set(float64(t.Mean()))
-	exp.getFloat(name + ".std-dev").Set(float64(t.StdDev()))
-	exp.getFloat(name + ".50-percentile").Set(float64(ps[0]))
-	exp.getFloat(name + ".75-percentile").Set(float64(ps[1]))
-	exp.getFloat(name + ".95-percentile").Set(float64(ps[2]))
-	exp.getFloat(name + ".99-percentile").Set(float64(ps[3]))
-	exp.getFloat(name + ".999-percentile").Set(float64(ps[4]))
-	exp.getFloat(name + ".one-minute").Set(float64(t.Rate1()))
-	exp.getFloat(name + ".five-minute").Set(float64(t.Rate5()))
-	exp.getFloat(name + ".fifteen-minute").Set(float64((t.Rate15())))
-	exp.getFloat(name + ".mean-rate").Set(float64(t.RateMean()))
-}
+// func (exp *exp) publishTimer(name string, metric metrics.Timer) {
+// 	t := metric.Snapshot()
+// 	ps := t.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999})
+// 	exp.getInt(name + ".count").Set(t.Count())
+// 	exp.getFloat(name + ".min").Set(float64(t.Min()))
+// 	exp.getFloat(name + ".max").Set(float64(t.Max()))
+// 	exp.getFloat(name + ".mean").Set(float64(t.Mean()))
+// 	exp.getFloat(name + ".std-dev").Set(float64(t.StdDev()))
+// 	exp.getFloat(name + ".50-percentile").Set(float64(ps[0]))
+// 	exp.getFloat(name + ".75-percentile").Set(float64(ps[1]))
+// 	exp.getFloat(name + ".95-percentile").Set(float64(ps[2]))
+// 	exp.getFloat(name + ".99-percentile").Set(float64(ps[3]))
+// 	exp.getFloat(name + ".999-percentile").Set(float64(ps[4]))
+// 	exp.getFloat(name + ".one-minute").Set(float64(t.Rate1()))
+// 	exp.getFloat(name + ".five-minute").Set(float64(t.Rate5()))
+// 	exp.getFloat(name + ".fifteen-minute").Set(float64((t.Rate15())))
+// 	exp.getFloat(name + ".mean-rate").Set(float64(t.RateMean()))
+// }
 
 func (exp *exp) syncToExpvar() {
 	exp.registry.Each(func(name, tags string, i interface{}) {
-		switch i.(type) {
+		switch metric := i.(type) {
 		case metrics.Counter:
-			exp.publishCounter(name, i.(metrics.Counter))
+			exp.publishCounter(name, metric)
 		case metrics.Gauge:
-			exp.publishGauge(name, i.(metrics.Gauge))
+			exp.publishGauge(name, metric)
 		case metrics.GaugeFloat64:
-			exp.publishGaugeFloat64(name, i.(metrics.GaugeFloat64))
-		case metrics.Histogram:
-			exp.publishHistogram(name, i.(metrics.Histogram))
-		case metrics.Meter:
-			exp.publishMeter(name, i.(metrics.Meter))
-		case metrics.Timer:
-			exp.publishTimer(name, i.(metrics.Timer))
+			exp.publishGaugeFloat64(name, metric)
+		// case metrics.Histogram:
+		// 	exp.publishHistogram(name,  metric)
+		// case metrics.Meter:
+		// 	exp.publishMeter(name,  metric)
+		// case metrics.Timer:
+		// 	exp.publishTimer(name, metric)
 		default:
 			panic(fmt.Sprintf("unsupported type for '%s': %T", name, i))
 		}

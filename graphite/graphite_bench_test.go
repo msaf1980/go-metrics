@@ -183,134 +183,137 @@ func BenchmarkGaugeFloat64T(b *testing.B) {
 	wg.Wait()
 }
 
-func BenchmarkHistogram(b *testing.B) {
-	_, l, r, cfg, wg := newBenchServer(b, "foobar")
+// func BenchmarkHistogram(b *testing.B) {
+// 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
-	h := metrics.GetOrRegisterHistogram("baz", r, s)
+// 	s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
+// 	h := metrics.GetOrRegisterHistogram("baz", r, s)
 
-	graphite := WithConfig(cfg)
+// 	graphite := WithConfig(cfg)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		h.Update(int64(i))
-		if err := graphite.send(r); err != nil {
-			b.Fatal(err)
-		}
-	}
-	graphite.Close()
-	b.StopTimer()
-	l.Close()
-	wg.Wait()
-}
+// 	b.ResetTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		h.Update(int64(i))
+// 		if err := graphite.send(r); err != nil {
+// 			b.Fatal(err)
+// 		}
+// 	}
+// 	graphite.Close()
+// 	b.StopTimer()
+// 	l.Close()
+// 	wg.Wait()
+// }
 
-func BenchmarkHistogramT(b *testing.B) {
-	_, l, r, cfg, wg := newBenchServer(b, "foobar")
+// func BenchmarkHistogramT(b *testing.B) {
+// 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
-	h := metrics.GetOrRegisterHistogramT("baz", "tag1=value1;tag21=value21", r, s)
+// 	s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
+// 	h := metrics.GetOrRegisterHistogramT("baz", "tag1=value1;tag21=value21", r, s)
 
-	graphite := WithConfig(cfg)
+// 	graphite := WithConfig(cfg)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		h.Update(int64(i))
-		if err := graphite.send(r); err != nil {
-			b.Fatal(err)
-		}
-	}
-	graphite.Close()
-	b.StopTimer()
-	l.Close()
-	wg.Wait()
-}
+// 	b.ResetTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		h.Update(int64(i))
+// 		if err := graphite.send(r); err != nil {
+// 			b.Fatal(err)
+// 		}
+// 	}
+// 	graphite.Close()
+// 	b.StopTimer()
+// 	l.Close()
+// 	wg.Wait()
+// }
 
-func BenchmarkMeter(b *testing.B) {
-	_, l, r, cfg, wg := newBenchServer(b, "foobar")
+// func BenchmarkMeter(b *testing.B) {
+// 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	m := metrics.GetOrRegisterMeter("quux", r)
+// 	m := metrics.GetOrRegisterMeter("quux", r)
 
-	graphite := WithConfig(cfg)
+// 	graphite := WithConfig(cfg)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		m.Mark(47)
-		if err := graphite.send(r); err != nil {
-			b.Fatal(err)
-		}
-	}
-	graphite.Close()
-	b.StopTimer()
-	l.Close()
-	wg.Wait()
-}
+// 	b.ResetTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		m.Mark(47)
+// 		if err := graphite.send(r); err != nil {
+// 			b.Fatal(err)
+// 		}
+// 	}
+// 	graphite.Close()
+// 	b.StopTimer()
+// 	l.Close()
+// 	wg.Wait()
+// }
 
-func BenchmarkMeterT(b *testing.B) {
-	_, l, r, cfg, wg := newBenchServer(b, "foobar")
+// func BenchmarkMeterT(b *testing.B) {
+// 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	m := metrics.GetOrRegisterMeterT("quux", "tag1=value1;tag21=value21", r)
+// 	m := metrics.GetOrRegisterMeterT("quux", "tag1=value1;tag21=value21", r)
 
-	graphite := WithConfig(cfg)
+// 	graphite := WithConfig(cfg)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		m.Mark(47)
-		if err := graphite.send(r); err != nil {
-			b.Fatal(err)
-		}
-	}
-	graphite.Close()
-	b.StopTimer()
-	l.Close()
-	wg.Wait()
-}
+// 	b.ResetTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		m.Mark(47)
+// 		if err := graphite.send(r); err != nil {
+// 			b.Fatal(err)
+// 		}
+// 	}
+// 	graphite.Close()
+// 	b.StopTimer()
+// 	l.Close()
+// 	wg.Wait()
+// }
 
-func BenchmarkTimer(b *testing.B) {
-	_, l, r, cfg, wg := newBenchServer(b, "foobar")
+// func BenchmarkTimer(b *testing.B) {
+// 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	t := metrics.GetOrRegisterTimer("bang", r)
-	t.Time(func() {})
+// 	t := metrics.GetOrRegisterTimer("bang", r)
+// 	t.Time(func() {})
 
-	graphite := WithConfig(cfg)
+// 	graphite := WithConfig(cfg)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		t.Update(47)
-		if err := graphite.send(r); err != nil {
-			b.Fatal(err)
-		}
-	}
-	graphite.Close()
-	b.StopTimer()
-	l.Close()
-	wg.Wait()
-}
+// 	b.ResetTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		t.Update(47)
+// 		if err := graphite.send(r); err != nil {
+// 			b.Fatal(err)
+// 		}
+// 	}
+// 	graphite.Close()
+// 	b.StopTimer()
+// 	l.Close()
+// 	wg.Wait()
+// }
 
-func BenchmarkTimerT(b *testing.B) {
-	_, l, r, cfg, wg := newBenchServer(b, "foobar")
+// func BenchmarkTimerT(b *testing.B) {
+// 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	t := metrics.GetOrRegisterTimerT("bang", "tag1=value1;tag21=value21", r)
-	t.Time(func() {})
+// 	t := metrics.GetOrRegisterTimerT("bang", "tag1=value1;tag21=value21", r)
+// 	t.Time(func() {})
 
-	graphite := WithConfig(cfg)
+// 	graphite := WithConfig(cfg)
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		t.Update(47)
-		if err := graphite.send(r); err != nil {
-			b.Fatal(err)
-		}
-	}
-	graphite.Close()
-	b.StopTimer()
-	l.Close()
-	wg.Wait()
-}
+// 	b.ResetTimer()
+// 	for i := 0; i < b.N; i++ {
+// 		t.Update(47)
+// 		if err := graphite.send(r); err != nil {
+// 			b.Fatal(err)
+// 		}
+// 	}
+// 	graphite.Close()
+// 	b.StopTimer()
+// 	l.Close()
+// 	wg.Wait()
+// }
 
 func BenchmarkAll(b *testing.B) {
 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
 	c := metrics.GetOrRegisterCounter("foo", r)
+
+	differ := metrics.GetOrRegisterDiffer("differ", r)
+	differ.Update(1)
 
 	g := metrics.GetOrRegisterGauge("bar", r)
 	g.Update(47)
@@ -318,24 +321,25 @@ func BenchmarkAll(b *testing.B) {
 	gf := metrics.GetOrRegisterGaugeFloat64("barf", r)
 	gf.Update(47)
 
-	s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
-	h := metrics.GetOrRegisterHistogram("baz", r, s)
+	// s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
+	// h := metrics.GetOrRegisterHistogram("baz", r, s)
 
-	t := metrics.GetOrRegisterTimer("bang", r)
-	t.Time(func() {})
+	// t := metrics.GetOrRegisterTimer("bang", r)
+	// t.Time(func() {})
 
-	m := metrics.GetOrRegisterMeter("quux", r)
+	// m := metrics.GetOrRegisterMeter("quux", r)
 
 	graphite := WithConfig(cfg)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		c.Inc(1)
+		differ.Update(int64(i))
 		g.Update(1)
 		gf.Update(1.1)
-		h.Update(int64(i))
-		t.Update(47)
-		m.Mark(47)
+		// h.Update(int64(i))
+		// t.Update(47)
+		// m.Mark(47)
 		if err := graphite.send(r); err != nil {
 			b.Fatal(err)
 		}
@@ -351,30 +355,34 @@ func BenchmarkAllT(b *testing.B) {
 
 	c := metrics.GetOrRegisterCounterT("foo", "tag1=value1;tag21=value21", r)
 
+	differ := metrics.GetOrRegisterDifferT("differ", "tag1=value1;tag21=value21", r)
+	differ.Update(1)
+
 	g := metrics.GetOrRegisterGaugeT("bar", "tag1=value1;tag21=value21", r)
 	g.Update(47)
 
 	gf := metrics.GetOrRegisterGaugeFloat64T("barf", "tag1=value1;tag21=value21", r)
 	gf.Update(47)
 
-	s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
-	h := metrics.GetOrRegisterHistogramT("baz", "tag1=value1;tag21=value21", r, s)
+	// s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
+	// h := metrics.GetOrRegisterHistogramT("baz", "tag1=value1;tag21=value21", r, s)
 
-	t := metrics.GetOrRegisterTimerT("bang", "tag1=value1;tag21=value21", r)
-	t.Time(func() {})
+	// t := metrics.GetOrRegisterTimerT("bang", "tag1=value1;tag21=value21", r)
+	// t.Time(func() {})
 
-	m := metrics.GetOrRegisterMeterT("quux", "tag1=value1;tag21=value21", r)
+	// m := metrics.GetOrRegisterMeterT("quux", "tag1=value1;tag21=value21", r)
 
 	graphite := WithConfig(cfg)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		c.Inc(1)
+		differ.Update(int64(i))
 		g.Update(1)
 		gf.Update(1.1)
-		h.Update(int64(i))
-		t.Update(47)
-		m.Mark(47)
+		// h.Update(int64(i))
+		// t.Update(47)
+		// m.Mark(47)
 		if err := graphite.send(r); err != nil {
 			b.Fatal(err)
 		}
@@ -390,28 +398,32 @@ func BenchmarkOnce(b *testing.B) {
 
 	c := metrics.GetOrRegisterCounter("foo", r)
 
+	differ := metrics.GetOrRegisterDiffer("differ", r)
+	differ.Update(1)
+
 	g := metrics.GetOrRegisterGauge("bar", r)
 	g.Update(47)
 
 	gf := metrics.GetOrRegisterGaugeFloat64("barf", r)
 	gf.Update(47)
 
-	s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
-	h := metrics.GetOrRegisterHistogram("baz", r, s)
+	// s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
+	// h := metrics.GetOrRegisterHistogram("baz", r, s)
 
-	t := metrics.GetOrRegisterTimer("bang", r)
-	t.Time(func() {})
+	// t := metrics.GetOrRegisterTimer("bang", r)
+	// t.Time(func() {})
 
-	m := metrics.GetOrRegisterMeter("quux", r)
+	// m := metrics.GetOrRegisterMeter("quux", r)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		c.Inc(1)
+		differ.Update(int64(i))
 		g.Update(1)
 		gf.Update(1.1)
-		h.Update(int64(i))
-		t.Update(47)
-		m.Mark(47)
+		// h.Update(int64(i))
+		// t.Update(47)
+		// m.Mark(47)
 		if err := Once(cfg, r); err != nil {
 			b.Fatal(err)
 		}
@@ -426,28 +438,32 @@ func BenchmarkOnceT(b *testing.B) {
 
 	c := metrics.GetOrRegisterCounterT("foo", "tag1=value1;tag21=value21", r)
 
+	differ := metrics.GetOrRegisterDifferT("differ", "tag1=value1;tag21=value21", r)
+	differ.Update(1)
+
 	g := metrics.GetOrRegisterGaugeT("bar", "tag1=value1;tag21=value21", r)
 	g.Update(47)
 
 	gf := metrics.GetOrRegisterGaugeFloat64T("barf", "tag1=value1;tag21=value21", r)
 	gf.Update(47)
 
-	s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
-	h := metrics.GetOrRegisterHistogramT("baz", "tag1=value1;tag21=value21", r, s)
+	// s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
+	// h := metrics.GetOrRegisterHistogramT("baz", "tag1=value1;tag21=value21", r, s)
 
-	t := metrics.GetOrRegisterTimerT("bang", "tag1=value1;tag21=value21", r)
-	t.Time(func() {})
+	// t := metrics.GetOrRegisterTimerT("bang", "tag1=value1;tag21=value21", r)
+	// t.Time(func() {})
 
-	m := metrics.GetOrRegisterMeterT("quux", "tag1=value1;tag21=value21", r)
+	// m := metrics.GetOrRegisterMeterT("quux", "tag1=value1;tag21=value21", r)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		c.Inc(1)
+		differ.Update(int64(i))
 		g.Update(1)
 		gf.Update(1.1)
-		h.Update(int64(i))
-		t.Update(47)
-		m.Mark(47)
+		// h.Update(int64(i))
+		// t.Update(47)
+		// m.Mark(47)
 		if err := Once(cfg, r); err != nil {
 			b.Fatal(err)
 		}

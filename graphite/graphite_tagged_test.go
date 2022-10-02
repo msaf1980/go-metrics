@@ -2,7 +2,6 @@ package graphite
 
 import (
 	"testing"
-	"time"
 
 	"github.com/msaf1980/go-metrics"
 	"github.com/msaf1980/go-metrics/test"
@@ -16,25 +15,27 @@ func TestWritesT(t *testing.T) {
 	metrics.GetOrRegisterCounterT("counter", ";tag1=value1;tag21=value21", r).Inc(2)
 	length += 2
 
+	metrics.GetOrRegisterDifferT("differ", ";tag1=value1;tag21=value21", r).Update(3)
+	metrics.GetOrRegisterDifferT("differ", ";tag1=value1;tag21=value21", r).Update(9)
 	metrics.GetOrRegisterGauge("gauge", r).Update(4) // non tagged
 	metrics.GetOrRegisterGaugeT("gauge", ";tag1=value1;tag21=value21", r).Update(3)
 	metrics.GetOrRegisterGaugeFloat64T("gauge_float", ";tag1=value1;tag21=value21", r).Update(2.1)
 	length += 3
 
-	metrics.GetOrRegisterTimerT("timer", ";tag1=value1;tag21=value21", r).Update(time.Second * 5)
-	metrics.GetOrRegisterTimerT("timer", ";tag1=value1;tag21=value21", r).Update(time.Second * 4)
-	metrics.GetOrRegisterTimerT("timer", ";tag1=value1;tag21=value21", r).Update(time.Second * 3)
-	metrics.GetOrRegisterTimerT("timer", ";tag1=value1;tag21=value21", r).Update(time.Second * 2)
-	metrics.GetOrRegisterTimerT("timer", ";tag1=value1;tag21=value21", r).Update(time.Second * 1)
-	length += 10
+	// metrics.GetOrRegisterTimerT("timer", ";tag1=value1;tag21=value21", r).Update(time.Second * 5)
+	// metrics.GetOrRegisterTimerT("timer", ";tag1=value1;tag21=value21", r).Update(time.Second * 4)
+	// metrics.GetOrRegisterTimerT("timer", ";tag1=value1;tag21=value21", r).Update(time.Second * 3)
+	// metrics.GetOrRegisterTimerT("timer", ";tag1=value1;tag21=value21", r).Update(time.Second * 2)
+	// metrics.GetOrRegisterTimerT("timer", ";tag1=value1;tag21=value21", r).Update(time.Second * 1)
+	// length += 10
 
-	// TODO: Use a mock meter rather than wasting 10s to get a QPS.
-	for i := 0; i < 10*4; i++ {
-		metrics.GetOrRegisterMeterT("meter", ";tag1=value1;tag21=value21", r).Mark(1)
-		// metrics.GetOrRegisterHistogram("histogram", r, metrics.NewUniformSample(100)).Update(1)
-		time.Sleep(200 * time.Millisecond)
-	}
-	length += 5 + 4
+	// // TODO: Use a mock meter rather than wasting 10s to get a QPS.
+	// for i := 0; i < 10*4; i++ {
+	// 	metrics.GetOrRegisterMeterT("meter", ";tag1=value1;tag21=value21", r).Mark(1)
+	// 	// metrics.GetOrRegisterHistogram("histogram", r, metrics.NewUniformSample(100)).Update(1)
+	// 	time.Sleep(200 * time.Millisecond)
+	// }
+	// length += 5 + 4
 
 	if err := Once(c, r); err != nil {
 		t.Error(err)
@@ -54,30 +55,31 @@ func TestWritesT(t *testing.T) {
 		"foobar.counter.count;tag1=value1;tag21=value21":    {V: 2.0},
 		"foobar.counter.count_ps;tag1=value1;tag21=value21": {V: 200.0},
 		// gauge
+		"foobar.differ;tag1=value1;tag21=value21": {V: 6.0},
 		"foobar.gauge":                                 {V: 4.0},
 		"foobar.gauge;tag1=value1;tag21=value21":       {V: 3.0},
 		"foobar.gauge_float;tag1=value1;tag21=value21": {V: 2.1},
-		// meter
-		"foobar.meter.count;tag1=value1;tag21=value21":          {V: 40.0},
-		"foobar.meter.mean;tag1=value1;tag21=value21":           {V: 5.12},
-		"foobar.meter.one-minute;tag1=value1;tag21=value21":     {V: 5.0},
-		"foobar.meter.five-minute;tag1=value1;tag21=value21":    {V: 5.0},
-		"foobar.meter.fifteen-minute;tag1=value1;tag21=value21": {V: 5.0},
-		// timer
-		"foobar.timer.count;tag1=value1;tag21=value21":          {V: 5.0},
-		"foobar.timer.count_ps;tag1=value1;tag21=value21":       {V: 500.0},
-		"foobar.timer.min;tag1=value1;tag21=value21":            {V: 1000.0},
-		"foobar.timer.max;tag1=value1;tag21=value21":            {V: 5000.0},
-		"foobar.timer.std-dev;tag1=value1;tag21=value21":        {V: 1414.21},
-		"foobar.timer.mean;tag1=value1;tag21=value21":           {V: 3000.0},
-		"foobar.timer.mean-rate;tag1=value1;tag21=value21":      {V: 240419.29, Dev: 250000},
-		"foobar.timer.50-percentile;tag1=value1;tag21=value21":  {V: 3000.0},
-		"foobar.timer.75-percentile;tag1=value1;tag21=value21":  {V: 4500.0},
-		"foobar.timer.99-percentile;tag1=value1;tag21=value21":  {V: 5000.0},
-		"foobar.timer.999-percentile;tag1=value1;tag21=value21": {V: 5000.0},
-		"foobar.timer.fifteen-minute;tag1=value1;tag21=value21": {V: 1.0, Dev: 0.2},
-		"foobar.timer.five-minute;tag1=value1;tag21=value21":    {V: 1.0, Dev: 0.2},
-		"foobar.timer.one-minute;tag1=value1;tag21=value21":     {V: 1.0, Dev: 0.2},
+		// // meter
+		// "foobar.meter.count;tag1=value1;tag21=value21":          {V: 40.0},
+		// "foobar.meter.mean;tag1=value1;tag21=value21":           {V: 5.12},
+		// "foobar.meter.one-minute;tag1=value1;tag21=value21":     {V: 5.0},
+		// "foobar.meter.five-minute;tag1=value1;tag21=value21":    {V: 5.0},
+		// "foobar.meter.fifteen-minute;tag1=value1;tag21=value21": {V: 5.0},
+		// // timer
+		// "foobar.timer.count;tag1=value1;tag21=value21":          {V: 5.0},
+		// "foobar.timer.count_ps;tag1=value1;tag21=value21":       {V: 500.0},
+		// "foobar.timer.min;tag1=value1;tag21=value21":            {V: 1000.0},
+		// "foobar.timer.max;tag1=value1;tag21=value21":            {V: 5000.0},
+		// "foobar.timer.std-dev;tag1=value1;tag21=value21":        {V: 1414.21},
+		// "foobar.timer.mean;tag1=value1;tag21=value21":           {V: 3000.0},
+		// "foobar.timer.mean-rate;tag1=value1;tag21=value21":      {V: 240419.29, Dev: 250000},
+		// "foobar.timer.50-percentile;tag1=value1;tag21=value21":  {V: 3000.0},
+		// "foobar.timer.75-percentile;tag1=value1;tag21=value21":  {V: 4500.0},
+		// "foobar.timer.99-percentile;tag1=value1;tag21=value21":  {V: 5000.0},
+		// "foobar.timer.999-percentile;tag1=value1;tag21=value21": {V: 5000.0},
+		// "foobar.timer.fifteen-minute;tag1=value1;tag21=value21": {V: 1.0, Dev: 0.2},
+		// "foobar.timer.five-minute;tag1=value1;tag21=value21":    {V: 1.0, Dev: 0.2},
+		// "foobar.timer.one-minute;tag1=value1;tag21=value21":     {V: 1.0, Dev: 0.2},
 	}
 
 	test.CompareMetrics(t, want, res)
