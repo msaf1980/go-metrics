@@ -136,7 +136,7 @@ func TestRuntimeStats(t *testing.T) {
 		b = nil
 	}
 	go func() {
-		time.Sleep(time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 	}()
 
 	runtime.GC()
