@@ -51,7 +51,7 @@ func LogScaledOnCue(r metrics.Registry, ch chan interface{}, scale time.Duration
 				l.Printf("gauge %s%s value: %f\n", name, tags, metric.Value())
 			case metrics.Healthcheck:
 				metric.Check()
-				l.Printf("healthcheck %s%s error: %v\n", name, tags, metric.Error())
+				l.Printf("healthcheck %s%s up: %v\n", name, tags, metric.IsUp())
 				// case metrics.Histogram:
 				// 	h := metric.Snapshot()
 				// 	ps := h.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999})

@@ -25,7 +25,7 @@ func Syslog(r metrics.Registry, d time.Duration, w *syslog.Writer) {
 				w.Info(fmt.Sprintf("gauge %s%s: value: %f", name, tags, metric.Value()))
 			case metrics.Healthcheck:
 				metric.Check()
-				w.Info(fmt.Sprintf("healthcheck %s%s error: %v", name, tags, metric.Error()))
+				w.Info(fmt.Sprintf("healthcheck %s%s up: %v", name, tags, metric.IsUp()))
 				// case metrics.Histogram:
 				// 	h := metric.Snapshot()
 				// 	ps := h.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999})

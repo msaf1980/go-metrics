@@ -226,11 +226,8 @@ func (r *StandardRegistry) GetAll() map[string]map[string]interface{} {
 		case GaugeFloat64:
 			values["value"] = metric.Value()
 		case Healthcheck:
-			values["error"] = nil
 			metric.Check()
-			if err := metric.Error(); nil != err {
-				values["error"] = metric.Error().Error()
-			}
+			values["status"] = metric.IsUp()
 			// case Histogram:
 			// 	h := metric.Snapshot()
 			// 	ps := h.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999})

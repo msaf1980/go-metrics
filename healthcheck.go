@@ -1,20 +1,24 @@
 package metrics
 
+import (
+	"sync/atomic"
+)
+
 // Healthchecks hold an error value describing an arbitrary up/down status.
 type Healthcheck interface {
 	Check()
-	Error() error
+	IsUp() bool
 	Healthy()
-	Unhealthy(error)
+	Unhealthy()
 }
 
 // NewHealthcheck constructs a new Healthcheck which will use the given
 // function to update its status.
-func NewHealthcheck(f func(Healthcheck)) Healthcheck {
+func NewHealthcheck(f func(bool) bool) Healthcheck {
 	if UseNilMetrics {
 		return NilHealthcheck{}
 	}
-	return &StandardHealthcheck{nil, f}
+	return &StandardHealthcheck{f: f}
 }
 
 // NilHealthcheck is a no-op.
@@ -23,39 +27,42 @@ type NilHealthcheck struct{}
 // Check is a no-op.
 func (NilHealthcheck) Check() {}
 
-// Error is a no-op.
-func (NilHealthcheck) Error() error { return nil }
+// IsError is a no-op.
+func (NilHealthcheck) IsUp() bool { return true }
 
 // Healthy is a no-op.
 func (NilHealthcheck) Healthy() {}
 
 // Unhealthy is a no-op.
-func (NilHealthcheck) Unhealthy(error) {}
+func (NilHealthcheck) Unhealthy() {}
 
 // StandardHealthcheck is the standard implementation of a Healthcheck and
 // stores the status and a function to call to update the status.
 type StandardHealthcheck struct {
-	err error
-	f   func(Healthcheck)
+	up int32
+	f  func(bool) bool
 }
 
 // Check runs the healthcheck function to update the healthcheck's status.
 func (h *StandardHealthcheck) Check() {
-	h.f(h)
+	if up := h.f(h.IsUp()); up {
+		atomic.CompareAndSwapInt32(&h.up, 0, 1)
+	} else {
+		atomic.CompareAndSwapInt32(&h.up, 1, 0)
+	}
 }
 
-// Error returns the healthcheck's status, which will be nil if it is healthy.
-func (h *StandardHealthcheck) Error() error {
-	return h.err
+// IsUp returns the healthcheck's status
+func (h *StandardHealthcheck) IsUp() bool {
+	return atomic.LoadInt32(&h.up) > 0
 }
 
 // Healthy marks the healthcheck as healthy.
 func (h *StandardHealthcheck) Healthy() {
-	h.err = nil
+	atomic.StoreInt32(&h.up, 1)
 }
 
-// Unhealthy marks the healthcheck as unhealthy.  The error is stored and
-// may be retrieved by the Error method.
-func (h *StandardHealthcheck) Unhealthy(err error) {
-	h.err = err
+// Unhealthy marks the healthcheck as unhealthy.
+func (h *StandardHealthcheck) Unhealthy() {
+	atomic.StoreInt32(&h.up, 0)
 }
