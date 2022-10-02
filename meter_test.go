@@ -5,6 +5,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/msaf1980/go-metrics/test"
 )
 
 func BenchmarkMeter(b *testing.B) {
@@ -99,7 +101,7 @@ func TestMeterStop(t *testing.T) {
 func TestMeterSnapshot(t *testing.T) {
 	m := NewMeter()
 	m.Mark(1)
-	if snapshot := m.Snapshot(); m.RateMean() != snapshot.RateMean() {
+	if snapshot := m.Snapshot(); m.RateMean() != snapshot.RateMean() || m.Count() != snapshot.Count() {
 		t.Fatal(snapshot)
 	}
 }
@@ -108,5 +110,38 @@ func TestMeterZero(t *testing.T) {
 	m := NewMeter()
 	if count := m.Count(); count != 0 {
 		t.Errorf("m.Count(): 0 != %v\n", count)
+	}
+}
+
+func TestMeter(t *testing.T) {
+	rand.Seed(time.Now().Unix())
+	ma := meterArbiter{
+		ticker: time.NewTicker(time.Millisecond),
+		meters: make(map[*StandardMeter]struct{}),
+	}
+	m := newStandardMeter()
+	ma.meters[m] = struct{}{}
+	go ma.tick()
+
+	time.Sleep(10 * time.Millisecond)
+
+	m.Mark(47)
+
+	time.Sleep(10 * time.Millisecond)
+
+	if want, v := int64(47), m.Count(); v != want {
+		t.Errorf("metric.Count() = %d, want %d", v, want)
+	}
+	if want, v := 469.01, m.RateMean(); !test.FloatEqDev(v, want, 10) {
+		t.Errorf("metric.RateMean() = %f, want %f", v, want)
+	}
+	if want, v := 9.4, m.Rate1(); !test.FloatEq(v, want) {
+		t.Errorf("metric.Rate1() = %f, want %f", v, want)
+	}
+	if want, v := 9.4, m.Rate5(); !test.FloatEq(v, want) {
+		t.Errorf("metric.Rate5() = %f, want %f", v, want)
+	}
+	if want, v := 9.4, m.Rate15(); !test.FloatEq(v, want) {
+		t.Errorf("metric.Rate15() = %f, want %f", v, want)
 	}
 }

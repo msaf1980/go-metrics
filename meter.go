@@ -31,6 +31,17 @@ func GetOrRegisterMeter(name string, r Registry) Meter {
 	return r.GetOrRegister(name, NewMeter).(Meter)
 }
 
+// GetOrRegisterMeterT returns an existing Meter or constructs and registers a
+// new StandardMeter.
+// Be sure to unregister the meter from the registry once it is of no use to
+// allow for garbage collection.
+func GetOrRegisterMeterT(name, tags string, r Registry) Meter {
+	if nil == r {
+		r = DefaultRegistry
+	}
+	return r.GetOrRegisterT(name, tags, NewMeter).(Meter)
+}
+
 // NewMeter constructs a new StandardMeter and launches a goroutine.
 // Be sure to call Stop() once the meter is of no use to allow for garbage collection.
 func NewMeter() Meter {
@@ -48,7 +59,7 @@ func NewMeter() Meter {
 	return m
 }
 
-// NewMeter constructs and registers a new StandardMeter and launches a
+// NewRegistereMeter constructs and registers a new StandardMeter and launches a
 // goroutine.
 // Be sure to unregister the meter from the registry once it is of no use to
 // allow for garbage collection.
@@ -58,6 +69,19 @@ func NewRegisteredMeter(name string, r Registry) Meter {
 		r = DefaultRegistry
 	}
 	r.Register(name, c)
+	return c
+}
+
+// NewRegistereMeterT constructs and registers a new StandardMeter and launches a
+// goroutine.
+// Be sure to unregister the meter from the registry once it is of no use to
+// allow for garbage collection.
+func NewRegisteredMeterT(name, tags string, r Registry) Meter {
+	c := NewMeter()
+	if nil == r {
+		r = DefaultRegistry
+	}
+	r.RegisterT(name, tags, c)
 	return c
 }
 
@@ -192,14 +216,14 @@ func (m *StandardMeter) RateMean() float64 {
 
 // Snapshot returns a read-only copy of the meter.
 func (m *StandardMeter) Snapshot() Meter {
-	copiedSnapshot := MeterSnapshot{
+	copiedSnapshot := &MeterSnapshot{
 		count:    atomic.LoadInt64(&m.snapshot.count),
 		rate1:    atomic.LoadUint64(&m.snapshot.rate1),
 		rate5:    atomic.LoadUint64(&m.snapshot.rate5),
 		rate15:   atomic.LoadUint64(&m.snapshot.rate15),
 		rateMean: atomic.LoadUint64(&m.snapshot.rateMean),
 	}
-	return &copiedSnapshot
+	return copiedSnapshot
 }
 
 func (m *StandardMeter) updateSnapshot() {

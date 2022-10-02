@@ -41,40 +41,42 @@ func LogScaledOnCue(r metrics.Registry, ch chan interface{}, scale time.Duration
 	duSuffix := scale.String()[1:]
 
 	for range ch {
-		r.Each(func(name string, i interface{}) {
+		r.Each(func(name, tags string, i interface{}) {
 			switch metric := i.(type) {
 			case metrics.Counter:
-				l.Printf("counter %s count: %9d\n", name, metric.Count())
+				l.Printf("counter %s%s count: %9d\n", name, tags, metric.Count())
 			case metrics.Gauge:
-				l.Printf("gauge %s value: %9d\n", name, metric.Value())
+				l.Printf("gauge %s%s value: %9d\n", name, tags, metric.Value())
 			case metrics.GaugeFloat64:
-				l.Printf("gauge %s value: %f\n", name, metric.Value())
+				l.Printf("gauge %s%s value: %f\n", name, tags, metric.Value())
 			case metrics.Healthcheck:
 				metric.Check()
-				l.Printf("healthcheck %s error: %v\n", name, metric.Error())
+				l.Printf("healthcheck %s%s error: %v\n", name, tags, metric.Error())
 			case metrics.Histogram:
 				h := metric.Snapshot()
 				ps := h.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999})
-				l.Printf("histogram %s  count: %9d min: %9d max: %9d mean: %9d stddev: %12.2f "+
+				l.Printf("histogram %s%s  count: %9d min: %9d max: %9d mean: %9d stddev: %12.2f "+
 					"median: %12.2f 75%%: %12.2f 95%%: %12.2f 99%%: %12.2f 99.9%%: %12.2f\n",
-					name, h.Count(), h.Min(), h.Max(), h.Mean(), h.StdDev(),
+					name, tags, h.Count(), h.Min(), h.Max(), h.Mean(), h.StdDev(),
 					ps[0], ps[1], ps[2], ps[3], ps[4],
 				)
 			case metrics.Meter:
 				m := metric.Snapshot()
-				l.Printf("meter %s  count: %9d 1-min rate: %12.2f 5-min rate: %12.2f 15-min rate: %12.2f mean rate: %12.2f\n",
-					name, m.Count(), m.Rate1(), m.Rate5(), m.Rate15(), m.RateMean(),
+				l.Printf("meter %s%s  count: %9d 1-min rate: %12.2f 5-min rate: %12.2f 15-min rate: %12.2f mean rate: %12.2f\n",
+					name, tags, m.Count(), m.Rate1(), m.Rate5(), m.Rate15(), m.RateMean(),
 				)
 			case metrics.Timer:
 				t := metric.Snapshot()
 				ps := t.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999})
-				l.Printf("timer %s  count: %9d min: %12.2f%s max: %12.2f%s mean: %12.2f%s stddev: %12.2f%s "+
+				l.Printf("timer %s%s  count: %9d min: %12.2f%s max: %12.2f%s mean: %12.2f%s stddev: %12.2f%s "+
 					"median: %12.2f%s 75%%: %12.2f%s 95%%: %12.2f%s 99%%: %12.2f%s 99.9%%: %12.2f%s "+
-					" 1-min rate: %12.2f 5-min rate: %12.2 15-min rate: %12.2f mean rate: %12.2f\n",
-					name, t.Count(), float64(t.Min())/du, duSuffix, float64(t.Max())/du, duSuffix,
+					"mean rate: %12.2f\n",
+					// " 1-min rate: %12.2f 5-min rate: %12.2 15-min rate: %12.2f\n",
+					name, tags, t.Count(), float64(t.Min())/du, duSuffix, float64(t.Max())/du, duSuffix,
 					t.Mean()/du, duSuffix, t.StdDev()/du, duSuffix,
 					ps[0]/du, duSuffix, ps[1]/du, duSuffix, ps[2]/du, duSuffix, ps[3]/du, duSuffix, ps[4]/du, duSuffix,
-					t.Rate1(), t.Rate5(), t.Rate15(), t.RateMean(),
+					t.RateMean(),
+					// t.Rate1(), t.Rate5(), t.Rate15(),
 				)
 			}
 		})

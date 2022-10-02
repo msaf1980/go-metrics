@@ -27,6 +27,8 @@ type Config struct {
 
 	Percentiles []float64 `toml:"percentiles" yaml:"percentiles" json:"percentiles"` // Percentiles to export from timers and histograms
 	percentiles []string  `toml:"-" yaml:"-" json:"-"`                               // Percentiles keys (pregenerated)
+
+	Tags map[string]string `toml:"tags" yaml:"tags" json:"tags"` // Tags for sended metrics (not used directky in graphite client, merge it with  metric individual tags)
 }
 
 func setDefaults(c *Config) {
@@ -51,7 +53,7 @@ func setDefaults(c *Config) {
 	c.percentiles = make([]string, 0, len(c.Percentiles))
 	for _, p := range c.Percentiles {
 		key := strings.Replace(strconv.FormatFloat(p*100.0, 'f', -1, 64), ".", "", 1)
-		c.percentiles = append(c.percentiles, "."+key+"-percentile ")
+		c.percentiles = append(c.percentiles, "."+key+"-percentile")
 	}
 }
 
@@ -180,13 +182,17 @@ func (g *Graphite) connect() error {
 	return err
 }
 
-func (g *Graphite) writeIntMetric(name, postfix string, v, ts int64) (err error) {
+func (g *Graphite) writeIntMetric(name, postfix string, tags string, v, ts int64) (err error) {
 	if g.c.Prefix != "" {
 		g.buf.WriteString(g.c.Prefix)
 		g.buf.WriteRune('.')
 	}
 	g.buf.WriteString(name)
 	g.buf.WriteString(postfix)
+	if tags != "" {
+		g.buf.WriteString(tags)
+	}
+	g.buf.WriteRune(' ')
 	g.buf.WriteInt(v, 10)
 	g.buf.WriteRune(' ')
 	g.buf.WriteInt(ts, 10)
@@ -198,13 +204,17 @@ func (g *Graphite) writeIntMetric(name, postfix string, v, ts int64) (err error)
 	return nil
 }
 
-func (g *Graphite) writeFloatMetric(name, postfix string, v float64, ts int64) (err error) {
+func (g *Graphite) writeFloatMetric(name, postfix string, tags string, v float64, ts int64) (err error) {
 	if g.c.Prefix != "" {
 		g.buf.WriteString(g.c.Prefix)
 		g.buf.WriteRune('.')
 	}
 	g.buf.WriteString(name)
 	g.buf.WriteString(postfix)
+	if tags != "" {
+		g.buf.WriteString(tags)
+	}
+	g.buf.WriteRune(' ')
 	g.buf.WriteFloat(v, 'f', 2, 64)
 	g.buf.WriteRune(' ')
 	g.buf.WriteInt(ts, 10)
@@ -248,79 +258,79 @@ func (g *Graphite) send(r metrics.Registry) error {
 		g.buf.Reset() // reset (if previouse write fail and buffer len > 10 * buf_size)
 	}
 
-	r.Each(func(name string, i interface{}) {
+	r.Each(func(name, tags string, i interface{}) {
 		switch metric := i.(type) {
 		case metrics.Counter:
 			count := metric.Count()
 			// fmt.Fprintf(w, "%s.%s.count %d %d\n", c.Prefix, name, count, now)
-			g.writeIntMetric(name, ".count ", count, now)
+			g.writeIntMetric(name, ".count", tags, count, now)
 			// fmt.Fprintf(w, "%s.%s.count_ps %.2f %d\n", c.Prefix, name, float64(count)/flushSeconds, now)
-			g.writeFloatMetric(name, ".count_ps ", float64(count)/flushSeconds, now)
+			g.writeFloatMetric(name, ".count_ps", tags, float64(count)/flushSeconds, now)
 		case metrics.Gauge:
 			// fmt.Fprintf(w, "%s.%s.value %d %d\n", c.Prefix, name, metric.Value(), now)
-			g.writeIntMetric(name, " ", metric.Value(), now)
+			g.writeIntMetric(name, "", tags, metric.Value(), now)
 		case metrics.GaugeFloat64:
 			// fmt.Fprintf(w, "%s.%s.value %f %d\n", c.Prefix, name, metric.Value(), now)
-			g.writeFloatMetric(name, " ", metric.Value(), now)
+			g.writeFloatMetric(name, "", tags, metric.Value(), now)
 		case metrics.Histogram:
 			h := metric.Snapshot()
 			ps := h.Percentiles(g.c.Percentiles)
 			// fmt.Fprintf(w, "%s.%s.count %d %d\n", c.Prefix, name, h.Count(), now)
-			g.writeIntMetric(name, ".count ", h.Count(), now)
+			g.writeIntMetric(name, ".count", tags, h.Count(), now)
 			// fmt.Fprintf(w, "%s.%s.min %d %d\n", c.Prefix, name, h.Min(), now)
-			g.writeIntMetric(name, ".min ", h.Min(), now)
+			g.writeIntMetric(name, ".min", tags, h.Min(), now)
 			// fmt.Fprintf(w, "%s.%s.max %d %d\n", c.Prefix, name, h.Max(), now)
-			g.writeIntMetric(name, ".max ", h.Max(), now)
+			g.writeIntMetric(name, ".max", tags, h.Max(), now)
 			// fmt.Fprintf(w, "%s.%s.mean %.2f %d\n", c.Prefix, name, h.Mean(), now)
-			g.writeFloatMetric(name, ".mean ", h.Mean(), now)
+			g.writeFloatMetric(name, ".mean", tags, h.Mean(), now)
 			// fmt.Fprintf(w, "%s.%s.std-dev %.2f %d\n", c.Prefix, name, h.StdDev(), now)
-			g.writeFloatMetric(name, ".std-dev ", h.StdDev(), now)
+			g.writeFloatMetric(name, ".std-dev", tags, h.StdDev(), now)
 			for psIdx, psKey := range g.c.percentiles {
 				// key := strings.Replace(strconv.FormatFloat(psKey*100.0, 'f', -1, 64), ".", "", 1)
 				// fmt.Fprintf(w, "%s.%s.%s-percentile %.2f %d\n", c.Prefix, name, key, ps[psIdx], now)
-				g.writeFloatMetric(name, psKey, ps[psIdx], now)
+				g.writeFloatMetric(name, psKey, tags, ps[psIdx], now)
 			}
 		case metrics.Meter:
 			m := metric.Snapshot()
 			// fmt.Fprintf(w, "%s.%s.count %d %d\n", c.Prefix, name, m.Count(), now)
-			g.writeIntMetric(name, ".count ", m.Count(), now)
+			g.writeIntMetric(name, ".count", tags, m.Count(), now)
 			// fmt.Fprintf(w, "%s.%s.one-minute %.2f %d\n", c.Prefix, name, m.Rate1(), now)
-			g.writeFloatMetric(name, ".one-minute ", m.Rate1(), now)
+			g.writeFloatMetric(name, ".one-minute", tags, m.Rate1(), now)
 			// fmt.Fprintf(w, "%s.%s.five-minute %.2f %d\n", c.Prefix, name, m.Rate5(), now)
-			g.writeFloatMetric(name, ".five-minute ", m.Rate5(), now)
+			g.writeFloatMetric(name, ".five-minute", tags, m.Rate5(), now)
 			// fmt.Fprintf(w, "%s.%s.fifteen-minute %.2f %d\n", c.Prefix, name, m.Rate15(), now)
-			g.writeFloatMetric(name, ".fifteen-minute ", m.Rate15(), now)
+			g.writeFloatMetric(name, ".fifteen-minute", tags, m.Rate15(), now)
 			// fmt.Fprintf(w, "%s.%s.mean %.2f %d\n", c.Prefix, name, m.RateMean(), now)
-			g.writeFloatMetric(name, ".mean ", m.RateMean(), now)
+			g.writeFloatMetric(name, ".mean", tags, m.RateMean(), now)
 		case metrics.Timer:
 			t := metric.Snapshot()
 			ps := t.Percentiles(g.c.Percentiles)
 			count := t.Count()
 			// fmt.Fprintf(w, "%s.%s.count %d %d\n", c.Prefix, name, count, now)
-			g.writeIntMetric(name, ".count ", count, now)
+			g.writeIntMetric(name, ".count", tags, count, now)
 			// fmt.Fprintf(w, "%s.%s.count_ps %.2f %d\n", c.Prefix, name, float64(count)/flushSeconds, now)
-			g.writeFloatMetric(name, ".count_ps ", float64(count)/flushSeconds, now)
+			g.writeFloatMetric(name, ".count_ps", tags, float64(count)/flushSeconds, now)
 			// fmt.Fprintf(w, "%s.%s.min %d %d\n", c.Prefix, name, t.Min()/int64(du), now)
-			g.writeIntMetric(name, ".min ", t.Min()/int64(du), now)
+			g.writeIntMetric(name, ".min", tags, t.Min()/int64(du), now)
 			// fmt.Fprintf(w, "%s.%s.max %d %d\n", c.Prefix, name, t.Max()/int64(du), now)
-			g.writeIntMetric(name, ".max ", t.Max()/int64(du), now)
+			g.writeIntMetric(name, ".max", tags, t.Max()/int64(du), now)
 			// fmt.Fprintf(w, "%s.%s.mean %.2f %d\n", c.Prefix, name, t.Mean()/du, now)
-			g.writeFloatMetric(name, ".mean ", t.Mean()/du, now)
+			g.writeFloatMetric(name, ".mean", tags, t.Mean()/du, now)
 			// fmt.Fprintf(w, "%s.%s.std-dev %.2f %d\n", c.Prefix, name, t.StdDev()/du, now)
-			g.writeFloatMetric(name, ".std-dev ", t.StdDev()/du, now)
+			g.writeFloatMetric(name, ".std-dev", tags, t.StdDev()/du, now)
 			for psIdx, psKey := range g.c.percentiles {
 				// key := strings.Replace(strconv.FormatFloat(psKey*100.0, 'f', -1, 64), ".", "", 1)
 				// fmt.Fprintf(w, "%s.%s.%s-percentile %.2f %d\n", c.Prefix, name, key, ps[psIdx]/du, now)
-				g.writeFloatMetric(name, psKey, ps[psIdx]/du, now)
+				g.writeFloatMetric(name, psKey, tags, ps[psIdx]/du, now)
 			}
 			// fmt.Fprintf(w, "%s.%s.one-minute %.2f %d\n", c.Prefix, name, t.Rate1(), now)
-			g.writeFloatMetric(name, ".one-minute ", t.Rate1(), now)
+			g.writeFloatMetric(name, ".one-minute", tags, t.Rate1(), now)
 			// fmt.Fprintf(w, "%s.%s.five-minute %.2f %d\n", c.Prefix, name, t.Rate5(), now)
-			g.writeFloatMetric(name, ".five-minute ", t.Rate5(), now)
+			g.writeFloatMetric(name, ".five-minute", tags, t.Rate5(), now)
 			// fmt.Fprintf(w, "%s.%s.fifteen-minute %.2f %d\n", c.Prefix, name, t.Rate15(), now)
-			g.writeFloatMetric(name, ".fifteen-minute ", t.Rate15(), now)
+			g.writeFloatMetric(name, ".fifteen-minute", tags, t.Rate15(), now)
 			// fmt.Fprintf(w, "%s.%s.mean-rate %.2f %d\n", c.Prefix, name, t.RateMean(), now)
-			g.writeFloatMetric(name, ".mean-rate ", t.RateMean(), now)
+			g.writeFloatMetric(name, ".mean-rate", tags, t.RateMean(), now)
 		default:
 			g.loggerError(fmt.Errorf("unable to record metric of type %T", i))
 		}

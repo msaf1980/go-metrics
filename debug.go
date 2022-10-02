@@ -73,6 +73,27 @@ func RegisterDebugGCStats(r Registry) {
 	})
 }
 
+// RegisterT metrics for the Go garbage collector statistics exported in
+// debug.GCStats.  The metrics are named by their fully-qualified Go symbols,
+// i.e. debug.GCStats.PauseTotal.
+func RegisterDebugGCStatsT(tags string, r Registry) {
+	registerDebugMetricsOnce.Do(func() {
+		debugMetrics.GCStats.LastGC = NewGauge()
+		debugMetrics.GCStats.NumGC = NewGauge()
+		debugMetrics.GCStats.Pause = NewHistogram(NewExpDecaySample(1028, 0.015))
+		//debugMetrics.GCStats.PauseQuantiles = NewHistogram(NewExpDecaySample(1028, 0.015))
+		debugMetrics.GCStats.PauseTotal = NewGauge()
+		debugMetrics.ReadGCStats = NewTimer()
+
+		r.RegisterT("debug.GCStats.LastGC", tags, debugMetrics.GCStats.LastGC)
+		r.RegisterT("debug.GCStats.NumGC", tags, debugMetrics.GCStats.NumGC)
+		r.RegisterT("debug.GCStats.Pause", tags, debugMetrics.GCStats.Pause)
+		//r.Register("debug.GCStats.PauseQuantiles", debugMetrics.GCStats.PauseQuantiles)
+		r.RegisterT("debug.GCStats.PauseTotal", tags, debugMetrics.GCStats.PauseTotal)
+		r.RegisterT("debug.ReadGCStats", tags, debugMetrics.ReadGCStats)
+	})
+}
+
 // Allocate an initial slice for gcStats.Pause to avoid allocations during
 // normal operation.
 func init() {

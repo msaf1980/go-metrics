@@ -38,6 +38,17 @@ func GetOrRegisterTimer(name string, r Registry) Timer {
 	return r.GetOrRegister(name, NewTimer).(Timer)
 }
 
+// GetOrRegisterTimerT returns an existing Timer or constructs and registers a
+// new StandardTimer.
+// Be sure to unregister the meter from the registry once it is of no use to
+// allow for garbage collection.
+func GetOrRegisterTimerT(name, tags string, r Registry) Timer {
+	if nil == r {
+		r = DefaultRegistry
+	}
+	return r.GetOrRegisterT(name, tags, NewTimer).(Timer)
+}
+
 // NewCustomTimer constructs a new StandardTimer from a Histogram and a Meter.
 // Be sure to call Stop() once the timer is of no use to allow for garbage collection.
 func NewCustomTimer(h Histogram, m Meter) Timer {
@@ -59,6 +70,18 @@ func NewRegisteredTimer(name string, r Registry) Timer {
 		r = DefaultRegistry
 	}
 	r.Register(name, c)
+	return c
+}
+
+// NewRegisteredTimerT constructs and registers a new StandardTimer.
+// Be sure to unregister the meter from the registry once it is of no use to
+// allow for garbage collection.
+func NewRegisteredTimerT(name, tags string, r Registry) Timer {
+	c := NewTimer()
+	if nil == r {
+		r = DefaultRegistry
+	}
+	r.RegisterT(name, tags, c)
 	return c
 }
 

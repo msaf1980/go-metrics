@@ -15,6 +15,11 @@ func (err DuplicateMetric) Error() string {
 	return "duplicate metric: " + string(err)
 }
 
+type NameTagged struct {
+	Name string
+	Tags string
+}
+
 // A Registry holds references to a set of metrics by name and can iterate
 // over them, calling callback functions provided by the user.
 //
@@ -23,24 +28,38 @@ func (err DuplicateMetric) Error() string {
 type Registry interface {
 
 	// Call the given function for each registered metric.
-	Each(func(string, interface{}))
+	Each(func(name string, tags string, i interface{}))
 
 	// Get the metric by the given name or nil if none is registered.
-	Get(string) interface{}
+	Get(name string) interface{}
 
-	// Gets an existing metric or registers the given one.
+	// Get the metric by the given name or nil if none is registered.
+	GetT(name string, tags string) interface{}
+
+	// Get an existing metric or registers the given one.
 	// The interface can be the metric to register if not found in registry,
 	// or a function returning the metric for lazy instantiation.
-	GetOrRegister(string, interface{}) interface{}
+	GetOrRegister(name string, i interface{}) interface{}
+
+	// Get get an existing metric or registers the given one.
+	// The interface can be the metric to register if not found in registry,
+	// or a function returning the metric for lazy instantiation.
+	GetOrRegisterT(name string, tags string, i interface{}) interface{}
 
 	// Register the given metric under the given name.
-	Register(string, interface{}) error
+	Register(name string, i interface{}) error
+
+	// Register the given metric under the given name.
+	RegisterT(name string, tags string, i interface{}) error
 
 	// Run all registered healthchecks.
-	// RunHealthchecks()
+	RunHealthchecks()
 
 	// Unregister the metric with the given name.
-	Unregister(string)
+	Unregister(name string)
+
+	// Unregister the metric with the given name.
+	UnregisterT(name, tags string)
 
 	// Unregister all metrics.  (Mostly for testing.)
 	UnregisterAll()
@@ -49,21 +68,28 @@ type Registry interface {
 // The standard implementation of a Registry is a mutex-protected map
 // of names to metrics.
 type StandardRegistry struct {
-	metrics map[string]interface{}
-	mutex   sync.RWMutex
+	metrics  map[string]interface{}
+	metricsT map[NameTagged]interface{}
+	mutex    sync.RWMutex
 }
 
 // Create a new registry.
 func NewRegistry() Registry {
-	return &StandardRegistry{metrics: make(map[string]interface{})}
+	return &StandardRegistry{
+		metrics:  make(map[string]interface{}),
+		metricsT: make(map[NameTagged]interface{}),
+	}
 }
 
 // Call the given function for each registered metric.
-func (r *StandardRegistry) Each(f func(string, interface{})) {
+func (r *StandardRegistry) Each(f func(string, string, interface{})) {
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 	for name, v := range r.metrics {
-		f(name, v)
+		f(name, "", v)
+	}
+	for k, v := range r.metricsT {
+		f(k.Name, k.Tags, v)
 	}
 }
 
@@ -75,7 +101,15 @@ func (r *StandardRegistry) Get(name string) interface{} {
 	return metric
 }
 
-// Gets an existing metric or creates and registers a new one. Threadsafe
+// GetT the metric by the given name and tags or nil if none is registered.
+func (r *StandardRegistry) GetT(name, tags string) interface{} {
+	r.mutex.RLock()
+	metric, _ := r.metricsT[NameTagged{Name: name, Tags: tags}]
+	r.mutex.RUnlock()
+	return metric
+}
+
+// Get an existing metric or creates and registers a new one. Threadsafe
 // alternative to calling Get and Register on failure.
 // The interface can be the metric to register if not found in registry,
 // or a function returning the metric for lazy instantiation.
@@ -104,6 +138,36 @@ func (r *StandardRegistry) GetOrRegister(name string, i interface{}) interface{}
 	return i
 }
 
+// Get an existing metric or creates and registers a new one. Threadsafe
+// alternative to calling Get and Register on failure.
+// The interface can be the metric to register if not found in registry,
+// or a function returning the metric for lazy instantiation.
+func (r *StandardRegistry) GetOrRegisterT(name, tags string, i interface{}) interface{} {
+	ntags := NameTagged{Name: name, Tags: tags}
+	// access the read lock first which should be re-entrant
+	r.mutex.RLock()
+	metric, ok := r.metricsT[ntags]
+	r.mutex.RUnlock()
+	if ok {
+		return metric
+	}
+
+	// only take the write lock if we'll be modifying the metrics map
+	if v := reflect.ValueOf(i); v.Kind() == reflect.Func {
+		i = v.Call(nil)[0].Interface()
+	}
+
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	metric, ok = r.metricsT[ntags]
+	if ok {
+		return metric
+	}
+
+	r.registerT(ntags, i)
+	return i
+}
+
 // Register the given metric under the given name.  Returns a DuplicateMetric
 // if a metric by the given name is already registered.
 func (r *StandardRegistry) Register(name string, i interface{}) error {
@@ -116,21 +180,43 @@ func (r *StandardRegistry) Register(name string, i interface{}) error {
 	return r.register(name, i)
 }
 
+// Register the given metric under the given name.  Returns a DuplicateMetric
+// if a metric by the given name is already registered.
+func (r *StandardRegistry) RegisterT(name string, tags string, i interface{}) error {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	// TODO: add tests
+	if v := reflect.ValueOf(i); v.Kind() == reflect.Func {
+		i = v.Call(nil)[0].Interface()
+	}
+	return r.registerT(NameTagged{Name: name, Tags: tags}, i)
+}
+
 // Run all registered healthchecks.
 func (r *StandardRegistry) RunHealthchecks() {
 	r.mutex.RLock()
-	defer r.mutex.RUnlock()
+	hs := make([]Healthcheck, 0, len(r.metrics)+len(r.metricsT))
 	for _, i := range r.metrics {
 		if h, ok := i.(Healthcheck); ok {
-			h.Check()
+			hs = append(hs, h)
 		}
+	}
+	for _, i := range r.metricsT {
+		if h, ok := i.(Healthcheck); ok {
+			hs = append(hs, h)
+		}
+	}
+	r.mutex.RUnlock()
+
+	for _, h := range hs {
+		h.Check()
 	}
 }
 
 // GetAll metrics in the Registry
 func (r *StandardRegistry) GetAll() map[string]map[string]interface{} {
 	data := make(map[string]map[string]interface{})
-	r.Each(func(name string, i interface{}) {
+	r.Each(func(name, tags string, i interface{}) {
 		values := make(map[string]interface{})
 		switch metric := i.(type) {
 		case Counter:
@@ -183,7 +269,7 @@ func (r *StandardRegistry) GetAll() map[string]map[string]interface{} {
 			values["15m.rate"] = t.Rate15()
 			values["mean.rate"] = t.RateMean()
 		}
-		data[name] = values
+		data[name+tags] = values
 	})
 	return data
 }
@@ -196,6 +282,15 @@ func (r *StandardRegistry) Unregister(name string) {
 	delete(r.metrics, name)
 }
 
+// Unregister the metric with the given name.
+func (r *StandardRegistry) UnregisterT(name, tags string) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	ntags := NameTagged{Name: name, Tags: tags}
+	r.stopT(ntags)
+	delete(r.metricsT, ntags)
+}
+
 // Unregister all metrics.  (Mostly for testing.)
 func (r *StandardRegistry) UnregisterAll() {
 	r.mutex.Lock()
@@ -203,6 +298,10 @@ func (r *StandardRegistry) UnregisterAll() {
 	for name := range r.metrics {
 		r.stop(name)
 		delete(r.metrics, name)
+	}
+	for ntags := range r.metricsT {
+		r.stopT(ntags)
+		delete(r.metricsT, ntags)
 	}
 }
 
@@ -219,8 +318,29 @@ func (r *StandardRegistry) register(name string, i interface{}) error {
 	return nil
 }
 
+func (r *StandardRegistry) registerT(ntags NameTagged, i interface{}) error {
+	if _, ok := r.metricsT[ntags]; ok {
+		return DuplicateMetric(ntags.Name + ntags.Tags)
+	}
+	switch i.(type) {
+	case Counter, Gauge, GaugeFloat64, Healthcheck, Histogram, Meter, Timer:
+		r.metricsT[ntags] = i
+	default:
+		return fmt.Errorf("invalid metric '%s': %#v", ntags.Name+ntags.Tags, i)
+	}
+	return nil
+}
+
 func (r *StandardRegistry) stop(name string) {
 	if i, ok := r.metrics[name]; ok {
+		if s, ok := i.(Stoppable); ok {
+			s.Stop()
+		}
+	}
+}
+
+func (r *StandardRegistry) stopT(ntags NameTagged) {
+	if i, ok := r.metricsT[ntags]; ok {
 		if s, ok := i.(Stoppable); ok {
 			s.Stop()
 		}
@@ -235,7 +355,7 @@ type Stoppable interface {
 var DefaultRegistry Registry = NewRegistry()
 
 // Call the given function for each registered metric.
-func Each(f func(string, interface{})) {
+func Each(f func(name, tags string, i interface{})) {
 	DefaultRegistry.Each(f)
 }
 
@@ -244,16 +364,33 @@ func Get(name string) interface{} {
 	return DefaultRegistry.Get(name)
 }
 
+// Get the metric by the given name or nil if none is registered.
+func GetT(name, tags string) interface{} {
+	return DefaultRegistry.GetT(name, tags)
+}
+
 // Gets an existing metric or creates and registers a new one. Threadsafe
 // alternative to calling Get and Register on failure.
 func GetOrRegister(name string, i interface{}) interface{} {
 	return DefaultRegistry.GetOrRegister(name, i)
 }
 
+// Gets an existing metric or creates and registers a new one. Threadsafe
+// alternative to calling Get and Register on failure.
+func GetOrRegisterT(name, tags string, i interface{}) interface{} {
+	return DefaultRegistry.GetOrRegisterT(name, tags, i)
+}
+
 // Register the given metric under the given name.  Returns a DuplicateMetric
 // if a metric by the given name is already registered.
 func Register(name string, i interface{}) error {
 	return DefaultRegistry.Register(name, i)
+}
+
+// Register the given metric under the given name.  Returns a DuplicateMetric
+// if a metric by the given name is already registered.
+func RegisterT(name, tags string, i interface{}) error {
+	return DefaultRegistry.RegisterT(name, tags, i)
 }
 
 // Register the given metric under the given name.  Panics if a metric by the
@@ -264,12 +401,25 @@ func MustRegister(name string, i interface{}) {
 	}
 }
 
+// Register the given metric under the given name.  Panics if a metric by the
+// given name is already registered.
+func MustRegisterT(name, tags string, i interface{}) {
+	if err := RegisterT(name, tags, i); err != nil {
+		panic(err)
+	}
+}
+
 // Run all registered healthchecks.
-// func RunHealthchecks() {
-// 	DefaultRegistry.RunHealthchecks()
-// }
+func RunHealthchecks() {
+	DefaultRegistry.RunHealthchecks()
+}
 
 // Unregister the metric with the given name.
 func Unregister(name string) {
 	DefaultRegistry.Unregister(name)
+}
+
+// Unregister the metric with the given name.
+func UnregisterT(name, tags string) {
+	DefaultRegistry.UnregisterT(name, tags)
 }

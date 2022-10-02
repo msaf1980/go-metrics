@@ -18,6 +18,15 @@ func GetOrRegisterGauge(name string, r Registry) Gauge {
 	return r.GetOrRegister(name, NewGauge).(Gauge)
 }
 
+// GetOrRegisterGaugeT returns an existing Gauge or constructs and registers a
+// new StandardGauge.
+func GetOrRegisterGaugeT(name, tags string, r Registry) Gauge {
+	if nil == r {
+		r = DefaultRegistry
+	}
+	return r.GetOrRegisterT(name, tags, NewGauge).(Gauge)
+}
+
 // NewGauge constructs a new StandardGauge.
 func NewGauge() Gauge {
 	if UseNilMetrics {
@@ -36,6 +45,16 @@ func NewRegisteredGauge(name string, r Registry) Gauge {
 	return c
 }
 
+// NewRegisteredGaugeT constructs and registers a new StandardGauge.
+func NewRegisteredGaugeT(name, tags string, r Registry) Gauge {
+	c := NewGauge()
+	if nil == r {
+		r = DefaultRegistry
+	}
+	r.RegisterT(name, tags, c)
+	return c
+}
+
 // NewFunctionalGauge constructs a new FunctionalGauge.
 func NewFunctionalGauge(f func() int64) Gauge {
 	if UseNilMetrics {
@@ -51,6 +70,16 @@ func NewRegisteredFunctionalGauge(name string, r Registry, f func() int64) Gauge
 		r = DefaultRegistry
 	}
 	r.Register(name, c)
+	return c
+}
+
+// NewRegisteredFunctionalGaugeT constructs and registers a new StandardGauge.
+func NewRegisteredFunctionalGaugeT(name, tags string, r Registry, f func() int64) Gauge {
+	c := NewFunctionalGauge(f)
+	if nil == r {
+		r = DefaultRegistry
+	}
+	r.RegisterT(name, tags, c)
 	return c
 }
 

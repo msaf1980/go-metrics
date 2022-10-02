@@ -26,6 +26,15 @@ func GetOrRegisterHistogram(name string, r Registry, s Sample) Histogram {
 	return r.GetOrRegister(name, func() Histogram { return NewHistogram(s) }).(Histogram)
 }
 
+// GetOrRegisterHistogramT returns an existing Histogram or constructs and
+// registers a new StandardHistogram.
+func GetOrRegisterHistogramT(name, tags string, r Registry, s Sample) Histogram {
+	if nil == r {
+		r = DefaultRegistry
+	}
+	return r.GetOrRegisterT(name, tags, func() Histogram { return NewHistogram(s) }).(Histogram)
+}
+
 // NewHistogram constructs a new StandardHistogram from a Sample.
 func NewHistogram(s Sample) Histogram {
 	if UseNilMetrics {
@@ -42,6 +51,17 @@ func NewRegisteredHistogram(name string, r Registry, s Sample) Histogram {
 		r = DefaultRegistry
 	}
 	r.Register(name, c)
+	return c
+}
+
+// NewRegisteredHistogramT constructs and registers a new StandardHistogram from
+// a Sample.
+func NewRegisteredHistogramT(name, tags string, r Registry, s Sample) Histogram {
+	c := NewHistogram(s)
+	if nil == r {
+		r = DefaultRegistry
+	}
+	r.RegisterT(name, tags, c)
 	return c
 }
 

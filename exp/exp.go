@@ -135,7 +135,7 @@ func (exp *exp) publishTimer(name string, metric metrics.Timer) {
 }
 
 func (exp *exp) syncToExpvar() {
-	exp.registry.Each(func(name string, i interface{}) {
+	exp.registry.Each(func(name, tags string, i interface{}) {
 		switch i.(type) {
 		case metrics.Counter:
 			exp.publishCounter(name, i.(metrics.Counter))

@@ -20,6 +20,15 @@ func GetOrRegisterCounter(name string, r Registry) Counter {
 	return r.GetOrRegister(name, NewCounter).(Counter)
 }
 
+// GetOrRegisterCounterT returns an existing Counter or constructs and registers
+// a new StandardCounter.
+func GetOrRegisterCounterT(name, tags string, r Registry) Counter {
+	if nil == r {
+		r = DefaultRegistry
+	}
+	return r.GetOrRegisterT(name, tags, NewCounter).(Counter)
+}
+
 // NewCounter constructs a new StandardCounter.
 func NewCounter() Counter {
 	if UseNilMetrics {
@@ -35,6 +44,16 @@ func NewRegisteredCounter(name string, r Registry) Counter {
 		r = DefaultRegistry
 	}
 	r.Register(name, c)
+	return c
+}
+
+// NewRegisteredCounterT constructs and registers a new StandardCounter.
+func NewRegisteredCounterT(name, tags string, r Registry) Counter {
+	c := NewCounter()
+	if nil == r {
+		r = DefaultRegistry
+	}
+	r.RegisterT(name, tags, c)
 	return c
 }
 
