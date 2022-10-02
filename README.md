@@ -1,13 +1,14 @@
 go-metrics
 ==========
 
-Go port of Coda Hale's Metrics library: <https://github.com/dropwizard/metrics>
+Golang metrics library:
 Based on `https://github.com/rcrowley/go-metrics`
 Main changes:
 1. Reduce alocations for better perfomance
 2. Read-lock during Registry.Each iterator (for avoid copy registry storage)
 3. Don't append ".value" postfix and Gauge and GaugeFloat64
-4. modified graphite client
+4. Modified graphite client
+5. Simplify metrics types
 
 Documentation: <http://godoc.org/github.com/msaf1980/go-metrics>.
 
