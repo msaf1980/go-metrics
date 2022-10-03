@@ -135,7 +135,7 @@ func (exp *exp) publishGaugeFloat64(name string, metric metrics.GaugeFloat64) {
 // }
 
 func (exp *exp) syncToExpvar() {
-	exp.registry.Each(func(name, tags string, i interface{}) {
+	exp.registry.Each(func(name, tags string, i interface{}) error {
 		switch metric := i.(type) {
 		case metrics.Counter:
 			exp.publishCounter(name, metric)
@@ -152,5 +152,6 @@ func (exp *exp) syncToExpvar() {
 		default:
 			panic(fmt.Sprintf("unsupported type for '%s': %T", name, i))
 		}
+		return nil
 	})
 }

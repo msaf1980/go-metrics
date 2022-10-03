@@ -28,7 +28,7 @@ type NameTagged struct {
 type Registry interface {
 
 	// Call the given function for each registered metric.
-	Each(func(name string, tags string, i interface{}))
+	Each(func(name string, tags string, i interface{}) error) error
 
 	// Get the metric by the given name or nil if none is registered.
 	Get(name string) interface{}
@@ -82,15 +82,21 @@ func NewRegistry() Registry {
 }
 
 // Call the given function for each registered metric.
-func (r *StandardRegistry) Each(f func(string, string, interface{})) {
+func (r *StandardRegistry) Each(f func(string, string, interface{}) error) error {
+	var err error
 	r.mutex.RLock()
 	defer r.mutex.RUnlock()
 	for name, v := range r.metrics {
-		f(name, "", v)
+		if err = f(name, "", v); err != nil {
+			return err
+		}
 	}
 	for k, v := range r.metricsT {
-		f(k.Name, k.Tags, v)
+		if err = f(k.Name, k.Tags, v); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // Get the metric by the given name or nil if none is registered.
@@ -216,7 +222,7 @@ func (r *StandardRegistry) RunHealthchecks() {
 // GetAll metrics in the Registry
 func (r *StandardRegistry) GetAll() map[string]map[string]interface{} {
 	data := make(map[string]map[string]interface{})
-	r.Each(func(name, tags string, i interface{}) {
+	r.Each(func(name, tags string, i interface{}) error {
 		values := make(map[string]interface{})
 		switch metric := i.(type) {
 		case Counter:
@@ -267,6 +273,7 @@ func (r *StandardRegistry) GetAll() map[string]map[string]interface{} {
 			// 	values["mean.rate"] = t.RateMean()
 		}
 		data[name+tags] = values
+		return nil
 	})
 	return data
 }
@@ -354,8 +361,8 @@ type Stoppable interface {
 var DefaultRegistry Registry = NewRegistry()
 
 // Call the given function for each registered metric.
-func Each(f func(name, tags string, i interface{})) {
-	DefaultRegistry.Each(f)
+func Each(f func(name, tags string, i interface{}) error) error {
+	return DefaultRegistry.Each(f)
 }
 
 // Get the metric by the given name or nil if none is registered.

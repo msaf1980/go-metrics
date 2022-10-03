@@ -266,20 +266,28 @@ func (g *Graphite) send(r metrics.Registry) error {
 		return err
 	}
 
-	r.Each(func(name, tags string, i interface{}) {
+	r.Each(func(name, tags string, i interface{}) error {
 		switch metric := i.(type) {
 		case metrics.Counter:
 			count := metric.Count()
 			// fmt.Fprintf(w, "%s.%s.count %d %d\n", c.Prefix, name, count, now)
-			g.writeIntMetric(name, ".count", tags, count, now)
+			if err = g.writeIntMetric(name, ".count", tags, count, now); err != nil {
+				return err
+			}
 			// fmt.Fprintf(w, "%s.%s.count_ps %.2f %d\n", c.Prefix, name, float64(count)/flushSeconds, now)
-			g.writeFloatMetric(name, ".count_ps", tags, float64(count)/flushSeconds, now)
+			if err = g.writeFloatMetric(name, ".count_ps", tags, float64(count)/flushSeconds, now); err != nil {
+				return err
+			}
 		case metrics.Gauge:
 			// fmt.Fprintf(w, "%s.%s.value %d %d\n", c.Prefix, name, metric.Value(), now)
-			g.writeIntMetric(name, "", tags, metric.Value(), now)
+			if err = g.writeIntMetric(name, "", tags, metric.Value(), now); err != nil {
+				return err
+			}
 		case metrics.GaugeFloat64:
 			// fmt.Fprintf(w, "%s.%s.value %f %d\n", c.Prefix, name, metric.Value(), now)
-			g.writeFloatMetric(name, "", tags, metric.Value(), now)
+			if err = g.writeFloatMetric(name, "", tags, metric.Value(), now); err != nil {
+				return err
+			}
 		// case metrics.Histogram:
 		// 	h := metric.Snapshot()
 		// 	ps := h.Percentiles(g.c.Percentiles)
@@ -342,6 +350,7 @@ func (g *Graphite) send(r metrics.Registry) error {
 		default:
 			g.loggerError(fmt.Errorf("unable to record metric of type %T", i))
 		}
+		return nil
 	})
 	return g.flush()
 }

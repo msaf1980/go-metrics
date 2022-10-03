@@ -41,7 +41,7 @@ func LogScaledOnCue(r metrics.Registry, ch chan interface{}, scale time.Duration
 	// duSuffix := scale.String()[1:]
 
 	for range ch {
-		r.Each(func(name, tags string, i interface{}) {
+		r.Each(func(name, tags string, i interface{}) error {
 			switch metric := i.(type) {
 			case metrics.Counter:
 				l.Printf("counter %s%s count: %9d\n", name, tags, metric.Count())
@@ -79,6 +79,7 @@ func LogScaledOnCue(r metrics.Registry, ch chan interface{}, scale time.Duration
 				// 		// t.Rate1(), t.Rate5(), t.Rate15(),
 				// 	)
 			}
+			return nil
 		})
 	}
 }

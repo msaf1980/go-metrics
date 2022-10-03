@@ -12,7 +12,7 @@ func BenchmarkRegistry(b *testing.B) {
 	r.Register("foo", NewCounter())
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		r.Each(func(string, string, interface{}) {})
+		r.Each(func(string, string, interface{}) error { return nil })
 	}
 }
 
@@ -21,7 +21,7 @@ func BenchmarkRegistryT(b *testing.B) {
 	r.RegisterT("foo", ";tag1=value1;tag21=value21", NewCounter())
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		r.Each(func(string, string, interface{}) {})
+		r.Each(func(string, string, interface{}) error { return nil })
 	}
 }
 
@@ -35,8 +35,9 @@ func BenchmarkRegistry1000(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		v := v[:0]
-		r.Each(func(k, _ string, _ interface{}) {
+		r.Each(func(k, _ string, _ interface{}) error {
 			v = append(v, k)
+			return nil
 		})
 	}
 }
@@ -51,8 +52,9 @@ func BenchmarkRegistry1000T(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		v := v[:0]
-		r.Each(func(k, _ string, _ interface{}) {
+		r.Each(func(k, _ string, _ interface{}) error {
 			v = append(v, k)
+			return nil
 		})
 	}
 }
@@ -67,8 +69,9 @@ func BenchmarkRegistry10000(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		v := v[:0]
-		r.Each(func(k, _ string, _ interface{}) {
+		r.Each(func(k, _ string, _ interface{}) error {
 			v = append(v, k)
+			return nil
 		})
 	}
 }
@@ -83,8 +86,9 @@ func BenchmarkRegistry10000T(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		v := v[:0]
-		r.Each(func(k, _ string, _ interface{}) {
+		r.Each(func(k, _ string, _ interface{}) error {
 			v = append(v, k)
+			return nil
 		})
 	}
 }
@@ -131,7 +135,7 @@ func TestRegistry(t *testing.T) {
 	r := NewRegistry()
 	r.Register("foo", NewCounter())
 	i := 0
-	r.Each(func(name, _ string, iface interface{}) {
+	r.Each(func(name, _ string, iface interface{}) error {
 		i++
 		if name != "foo" {
 			t.Fatal(name)
@@ -139,13 +143,14 @@ func TestRegistry(t *testing.T) {
 		if _, ok := iface.(Counter); !ok {
 			t.Fatal(iface)
 		}
+		return nil
 	})
 	if i != 1 {
 		t.Fatal(i)
 	}
 	r.Unregister("foo")
 	i = 0
-	r.Each(func(string, string, interface{}) { i++ })
+	r.Each(func(string, string, interface{}) error { i++; return nil })
 	if i != 0 {
 		t.Fatal(i)
 	}
@@ -160,11 +165,12 @@ func TestRegistryDuplicate(t *testing.T) {
 		t.Fatal(err)
 	}
 	i := 0
-	r.Each(func(name, tags string, iface interface{}) {
+	r.Each(func(name, tags string, iface interface{}) error {
 		i++
 		if _, ok := iface.(Counter); !ok {
 			t.Fatal(iface)
 		}
+		return nil
 	})
 	if i != 1 {
 		t.Fatal(i)
@@ -194,7 +200,7 @@ func TestRegistryGetOrRegister(t *testing.T) {
 	}
 
 	i := 0
-	r.Each(func(name, tags string, iface interface{}) {
+	r.Each(func(name, tags string, iface interface{}) error {
 		i++
 		if name != "foo" {
 			t.Fatal(name)
@@ -202,6 +208,7 @@ func TestRegistryGetOrRegister(t *testing.T) {
 		if _, ok := iface.(Counter); !ok {
 			t.Fatal(iface)
 		}
+		return nil
 	})
 	if i != 1 {
 		t.Fatal(i)
@@ -219,7 +226,7 @@ func TestRegistryGetOrRegisterWithLazyInstantiation(t *testing.T) {
 	}
 
 	i := 0
-	r.Each(func(name, tags string, iface interface{}) {
+	r.Each(func(name, tags string, iface interface{}) error {
 		i++
 		if name != "foo" {
 			t.Fatal(name)
@@ -227,6 +234,7 @@ func TestRegistryGetOrRegisterWithLazyInstantiation(t *testing.T) {
 		if _, ok := iface.(Counter); !ok {
 			t.Fatal(iface)
 		}
+		return nil
 	})
 	if i != 1 {
 		t.Fatal(i)

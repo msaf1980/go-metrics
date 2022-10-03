@@ -15,7 +15,7 @@ import (
 // the given syslogger.
 func Syslog(r metrics.Registry, d time.Duration, w *syslog.Writer) {
 	for range time.Tick(d) {
-		r.Each(func(name, tags string, i interface{}) {
+		r.Each(func(name, tags string, i interface{}) error {
 			switch metric := i.(type) {
 			case metrics.Counter:
 				w.Info(fmt.Sprintf("counter %s%s count: %d", name, tags, metric.Count()))
@@ -77,6 +77,7 @@ func Syslog(r metrics.Registry, d time.Duration, w *syslog.Writer) {
 				// 		// t.Rate15(),
 				// 	))
 			}
+			return nil
 		})
 	}
 }
