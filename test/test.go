@@ -21,7 +21,7 @@ type Value struct {
 	Dev float64
 }
 
-func CompareMetrics(t *testing.T, expected map[string]Value, actual map[string]float64) {
+func CompareMetrics(t *testing.T, expected map[string]Value, actual map[string]float64) bool {
 	var errs []string
 	for k, ev := range expected {
 		if av, ok := actual[k]; !ok {
@@ -38,5 +38,7 @@ func CompareMetrics(t *testing.T, expected map[string]Value, actual map[string]f
 	if len(errs) != 0 {
 		sort.Strings(errs)
 		t.Error(strings.Join(errs, ""))
+		return true
 	}
+	return false
 }

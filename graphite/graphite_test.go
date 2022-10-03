@@ -30,7 +30,9 @@ func ExampleWithConfig() {
 	g.Stop()
 }
 
-func newTestServer(t *testing.T, prefix string) (map[string]float64, net.Listener, metrics.Registry, *Config, *sync.WaitGroup) {
+func newTestServer(t *testing.T, prefix string) (*strings.Builder, map[string]float64, net.Listener, metrics.Registry, *Config, *sync.WaitGroup) {
+	sb := &strings.Builder{}
+	sb.Grow(4096)
 	res := make(map[string]float64)
 
 	ln, err := net.Listen("tcp", "127.0.0.1:0")
@@ -54,6 +56,7 @@ func newTestServer(t *testing.T, prefix string) (map[string]float64, net.Listene
 			r := bufio.NewReader(conn)
 			line, err := r.ReadString('\n')
 			for err == nil {
+				sb.WriteString(line)
 				parts := strings.Split(line, " ")
 				i, _ := strconv.ParseFloat(parts[1], 64)
 				if testing.Verbose() {
@@ -78,12 +81,12 @@ func newTestServer(t *testing.T, prefix string) (map[string]float64, net.Listene
 		Prefix:         prefix,
 	}
 
-	return res, ln, r, c, wg
+	return sb, res, ln, r, c, wg
 }
 
 func TestWrites(t *testing.T) {
 	length := 0
-	res, l, r, c, wg := newTestServer(t, "foobar")
+	sb, res, l, r, c, wg := newTestServer(t, "foobar")
 	defer r.UnregisterAll()
 
 	metrics.GetOrRegisterCounter("counter", r).Inc(2)
@@ -147,70 +150,7 @@ func TestWrites(t *testing.T) {
 		// "foobar.timer.one-minute":     {V: 1.0, Dev: 0.2},
 	}
 
-	test.CompareMetrics(t, want, res)
-
-	// // counter
-	// if expected, found := 2.0, res["foobar.counter.count"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.counter.count:", expected, found)
-	// }
-	// if expected, found := 200.0, res["foobar.counter.count_ps"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.counter.count:", expected, found)
-	// }
-
-	// // gauge
-	// if expected, found := 3.0, res["foobar.gauge"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.gauge:", expected, found)
-	// }
-	// if expected, found := 2.1, res["foobar.gauge_float"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.gauge_float:", expected, found)
-	// }
-
-	// // meter
-	// if expected, found := 40.0, res["foobar.meter.count"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.meter.count:", expected, found)
-	// }
-	// if expected, found := 5.0, res["foobar.meter.one-minute"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.meter.one-minute:", expected, found)
-	// }
-	// if expected, found := 5.0, res["foobar.meter.five-minute"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.meter.five-minute:", expected, found)
-	// }
-	// if expected, found := 5.0, res["foobar.meter.fifteen-minute"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.meter.fifteen-minute:", expected, found)
-	// }
-	// if expected, found := 5.12, res["foobar.meter.mean"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.meter.mean:", expected, found)
-	// }
-
-	// // timer [1000, 2000, 3000, 4000, 5000]
-	// if expected, found := 5.0, res["foobar.timer.count"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.timer.count:", expected, found)
-	// }
-	// if expected, found := 500.0, res["foobar.timer.count_ps"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.timer.count_ps:", expected, found)
-	// }
-	// if expected, found := 5000.0, res["foobar.timer.999-percentile"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.timer.999-percentile:", expected, found)
-	// }
-	// if expected, found := 5000.0, res["foobar.timer.99-percentile"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.timer.99-percentile:", expected, found)
-	// }
-	// if expected, found := 4500.0, res["foobar.timer.75-percentile"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.timer.75-percentile:", expected, found)
-	// }
-	// if expected, found := 3000.0, res["foobar.timer.50-percentile"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.timer.50-percentile:", expected, found)
-	// }
-	// if expected, found := 1000.0, res["foobar.timer.min"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.timer.min:", expected, found)
-	// }
-	// if expected, found := 5000.0, res["foobar.timer.max"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.timer.max:", expected, found)
-	// }
-	// if expected, found := 3000.0, res["foobar.timer.mean"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.timer.mean:", expected, found)
-	// }
-	// if expected, found := 1414.21, res["foobar.timer.std-dev"]; !floatEquals(found, expected) {
-	// 	t.Error("bad value foobar.timer.std-dev:", expected, found)
-	// }
+	if test.CompareMetrics(t, want, res) {
+		t.Error(sb.String())
+	}
 }
