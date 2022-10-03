@@ -250,12 +250,20 @@ func (g *Graphite) flush() (err error) {
 }
 
 func (g *Graphite) send(r metrics.Registry) error {
+	var err error
+
 	now := time.Now().Unix()
 	// du := float64(g.c.DurationUnit)
 	flushSeconds := float64(g.c.FlushInterval) / float64(time.Second)
 
-	if g.buf.Len() > 10*g.c.BufSize {
-		g.buf.Reset() // reset (if previouse write fail and buffer len > 10 * buf_size)
+	if g.conn == nil {
+		if err = g.connect(); err != nil {
+			return err
+		}
+	}
+
+	if err = g.flush(); err != nil {
+		return err
 	}
 
 	r.Each(func(name, tags string, i interface{}) {
