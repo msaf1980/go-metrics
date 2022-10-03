@@ -41,7 +41,7 @@ func TestGaugeFloat64Snapshot(t *testing.T) {
 func TestGetOrRegisterGaugeFloat64(t *testing.T) {
 	r := NewRegistry()
 	NewRegisteredGaugeFloat64("foo", r).Update(float64(47.0))
-	t.Logf("registry: %v", r)
+	// t.Logf("registry: %v", r)
 	if g := GetOrRegisterGaugeFloat64("foo", r); float64(47.0) != g.Value() {
 		t.Fatal(g)
 	}

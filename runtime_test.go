@@ -136,8 +136,9 @@ func TestRuntimeStats(t *testing.T) {
 		b = nil
 	}
 	go func() {
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	}()
+	time.Sleep(time.Millisecond)
 
 	runtime.GC()
 	CaptureRuntimeMemStatsOnce()
