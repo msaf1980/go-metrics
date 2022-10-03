@@ -82,7 +82,7 @@ func BenchmarkCounter(b *testing.B) {
 func BenchmarkCounterT(b *testing.B) {
 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	c := metrics.GetOrRegisterCounterT("foo", "tag1=value1;tag21=value21", r)
+	c := metrics.GetOrRegisterCounterT("foo", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 
 	graphite := WithConfig(cfg)
 
@@ -123,7 +123,7 @@ func BenchmarkGauge(b *testing.B) {
 func BenchmarkGaugeT(b *testing.B) {
 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	g := metrics.GetOrRegisterGaugeT("bar", "tag1=value1;tag21=value21", r)
+	g := metrics.GetOrRegisterGaugeT("bar", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 	g.Update(47)
 
 	graphite := WithConfig(cfg)
@@ -165,7 +165,7 @@ func BenchmarkGaugeFloat64(b *testing.B) {
 func BenchmarkGaugeFloat64T(b *testing.B) {
 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	g := metrics.GetOrRegisterGaugeFloat64T("bar", "tag1=value1;tag21=value21", r)
+	g := metrics.GetOrRegisterGaugeFloat64T("bar", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 	g.Update(47)
 
 	graphite := WithConfig(cfg)
@@ -208,7 +208,7 @@ func BenchmarkGaugeFloat64T(b *testing.B) {
 // 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
 // 	s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
-// 	h := metrics.GetOrRegisterHistogramT("baz", "tag1=value1;tag21=value21", r, s)
+// 	h := metrics.GetOrRegisterHistogramT("baz", map[string]string{"tag1": "value1", "tag21": "value21"}, r, s)
 
 // 	graphite := WithConfig(cfg)
 
@@ -248,7 +248,7 @@ func BenchmarkGaugeFloat64T(b *testing.B) {
 // func BenchmarkMeterT(b *testing.B) {
 // 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-// 	m := metrics.GetOrRegisterMeterT("quux", "tag1=value1;tag21=value21", r)
+// 	m := metrics.GetOrRegisterMeterT("quux", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 
 // 	graphite := WithConfig(cfg)
 
@@ -289,7 +289,7 @@ func BenchmarkGaugeFloat64T(b *testing.B) {
 // func BenchmarkTimerT(b *testing.B) {
 // 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-// 	t := metrics.GetOrRegisterTimerT("bang", "tag1=value1;tag21=value21", r)
+// 	t := metrics.GetOrRegisterTimerT("bang", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 // 	t.Time(func() {})
 
 // 	graphite := WithConfig(cfg)
@@ -353,24 +353,24 @@ func BenchmarkAll(b *testing.B) {
 func BenchmarkAllT(b *testing.B) {
 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	c := metrics.GetOrRegisterCounterT("foo", "tag1=value1;tag21=value21", r)
+	c := metrics.GetOrRegisterCounterT("foo", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 
-	differ := metrics.GetOrRegisterDifferT("differ", "tag1=value1;tag21=value21", r)
+	differ := metrics.GetOrRegisterDifferT("differ", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 	differ.Update(1)
 
-	g := metrics.GetOrRegisterGaugeT("bar", "tag1=value1;tag21=value21", r)
+	g := metrics.GetOrRegisterGaugeT("bar", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 	g.Update(47)
 
-	gf := metrics.GetOrRegisterGaugeFloat64T("barf", "tag1=value1;tag21=value21", r)
+	gf := metrics.GetOrRegisterGaugeFloat64T("barf", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 	gf.Update(47)
 
 	// s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
-	// h := metrics.GetOrRegisterHistogramT("baz", "tag1=value1;tag21=value21", r, s)
+	// h := metrics.GetOrRegisterHistogramT("baz", map[string]string{"tag1": "value1", "tag21": "value21"}, r, s)
 
-	// t := metrics.GetOrRegisterTimerT("bang", "tag1=value1;tag21=value21", r)
+	// t := metrics.GetOrRegisterTimerT("bang", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 	// t.Time(func() {})
 
-	// m := metrics.GetOrRegisterMeterT("quux", "tag1=value1;tag21=value21", r)
+	// m := metrics.GetOrRegisterMeterT("quux", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 
 	graphite := WithConfig(cfg)
 
@@ -436,24 +436,24 @@ func BenchmarkOnce(b *testing.B) {
 func BenchmarkOnceT(b *testing.B) {
 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	c := metrics.GetOrRegisterCounterT("foo", "tag1=value1;tag21=value21", r)
+	c := metrics.GetOrRegisterCounterT("foo", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 
-	differ := metrics.GetOrRegisterDifferT("differ", "tag1=value1;tag21=value21", r)
+	differ := metrics.GetOrRegisterDifferT("differ", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 	differ.Update(1)
 
-	g := metrics.GetOrRegisterGaugeT("bar", "tag1=value1;tag21=value21", r)
+	g := metrics.GetOrRegisterGaugeT("bar", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 	g.Update(47)
 
-	gf := metrics.GetOrRegisterGaugeFloat64T("barf", "tag1=value1;tag21=value21", r)
+	gf := metrics.GetOrRegisterGaugeFloat64T("barf", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 	gf.Update(47)
 
 	// s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
-	// h := metrics.GetOrRegisterHistogramT("baz", "tag1=value1;tag21=value21", r, s)
+	// h := metrics.GetOrRegisterHistogramT("baz", map[string]string{"tag1": "value1", "tag21": "value21"}, r, s)
 
-	// t := metrics.GetOrRegisterTimerT("bang", "tag1=value1;tag21=value21", r)
+	// t := metrics.GetOrRegisterTimerT("bang", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 	// t.Time(func() {})
 
-	// m := metrics.GetOrRegisterMeterT("quux", "tag1=value1;tag21=value21", r)
+	// m := metrics.GetOrRegisterMeterT("quux", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

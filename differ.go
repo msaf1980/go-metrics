@@ -15,11 +15,11 @@ func GetOrRegisterDiffer(name string, r Registry) Gauge {
 
 // GetOrRegisterDifferT returns an existing Differ or constructs and registers a
 // new StandardDiffer.
-func GetOrRegisterDifferT(name, tags string, r Registry) Gauge {
+func GetOrRegisterDifferT(name string, tagsMap map[string]string, r Registry) Gauge {
 	if nil == r {
 		r = DefaultRegistry
 	}
-	return r.GetOrRegisterT(name, tags, NewDiffer).(Gauge)
+	return r.GetOrRegisterT(name, tagsMap, NewDiffer).(Gauge)
 }
 
 // NewDiffer constructs a new StandardDiffer.
@@ -41,12 +41,12 @@ func NewRegisteredDiffer(name string, r Registry) Gauge {
 }
 
 // NewRegisteredDifferT constructs and registers a new StandardDiffer.
-func NewRegisteredDifferT(name, tags string, r Registry) Gauge {
+func NewRegisteredDifferT(name string, tagsMap map[string]string, r Registry) Gauge {
 	c := NewDiffer()
 	if nil == r {
 		r = DefaultRegistry
 	}
-	r.RegisterT(name, tags, c)
+	r.RegisterT(name, tagsMap, c)
 	return c
 }
 

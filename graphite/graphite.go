@@ -266,7 +266,7 @@ func (g *Graphite) send(r metrics.Registry) error {
 		return err
 	}
 
-	r.Each(func(name, tags string, i interface{}) error {
+	r.Each(func(name, tags string, tagsMap map[string]string, i interface{}) error {
 		switch metric := i.(type) {
 		case metrics.Counter:
 			count := metric.Count()

@@ -22,11 +22,11 @@ func GetOrRegisterCounter(name string, r Registry) Counter {
 
 // GetOrRegisterCounterT returns an existing Counter or constructs and registers
 // a new StandardCounter.
-func GetOrRegisterCounterT(name, tags string, r Registry) Counter {
+func GetOrRegisterCounterT(name string, tagsMap map[string]string, r Registry) Counter {
 	if nil == r {
 		r = DefaultRegistry
 	}
-	return r.GetOrRegisterT(name, tags, NewCounter).(Counter)
+	return r.GetOrRegisterT(name, tagsMap, NewCounter).(Counter)
 }
 
 // NewCounter constructs a new StandardCounter.
@@ -48,12 +48,12 @@ func NewRegisteredCounter(name string, r Registry) Counter {
 }
 
 // NewRegisteredCounterT constructs and registers a new StandardCounter.
-func NewRegisteredCounterT(name, tags string, r Registry) Counter {
+func NewRegisteredCounterT(name string, tagsMap map[string]string, r Registry) Counter {
 	c := NewCounter()
 	if nil == r {
 		r = DefaultRegistry
 	}
-	r.RegisterT(name, tags, c)
+	r.RegisterT(name, tagsMap, c)
 	return c
 }
 

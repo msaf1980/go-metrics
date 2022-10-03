@@ -20,11 +20,11 @@ func GetOrRegisterGauge(name string, r Registry) Gauge {
 
 // GetOrRegisterGaugeT returns an existing Gauge or constructs and registers a
 // new StandardGauge.
-func GetOrRegisterGaugeT(name, tags string, r Registry) Gauge {
+func GetOrRegisterGaugeT(name string, tagsMap map[string]string, r Registry) Gauge {
 	if nil == r {
 		r = DefaultRegistry
 	}
-	return r.GetOrRegisterT(name, tags, NewGauge).(Gauge)
+	return r.GetOrRegisterT(name, tagsMap, NewGauge).(Gauge)
 }
 
 // NewGauge constructs a new StandardGauge.
@@ -46,12 +46,12 @@ func NewRegisteredGauge(name string, r Registry) Gauge {
 }
 
 // NewRegisteredGaugeT constructs and registers a new StandardGauge.
-func NewRegisteredGaugeT(name, tags string, r Registry) Gauge {
+func NewRegisteredGaugeT(name string, tagsMap map[string]string, r Registry) Gauge {
 	c := NewGauge()
 	if nil == r {
 		r = DefaultRegistry
 	}
-	r.RegisterT(name, tags, c)
+	r.RegisterT(name, tagsMap, c)
 	return c
 }
 
@@ -74,12 +74,12 @@ func NewRegisteredFunctionalGauge(name string, r Registry, f func() int64) Gauge
 }
 
 // NewRegisteredFunctionalGaugeT constructs and registers a new StandardGauge.
-func NewRegisteredFunctionalGaugeT(name, tags string, r Registry, f func() int64) Gauge {
+func NewRegisteredFunctionalGaugeT(name string, tagsMap map[string]string, r Registry, f func() int64) Gauge {
 	c := NewFunctionalGauge(f)
 	if nil == r {
 		r = DefaultRegistry
 	}
-	r.RegisterT(name, tags, c)
+	r.RegisterT(name, tagsMap, c)
 	return c
 }
 

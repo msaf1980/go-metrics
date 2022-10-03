@@ -135,20 +135,20 @@ func (exp *exp) publishGaugeFloat64(name string, metric metrics.GaugeFloat64) {
 // }
 
 func (exp *exp) syncToExpvar() {
-	exp.registry.Each(func(name, tags string, i interface{}) error {
+	exp.registry.Each(func(name, tags string, tagsMap map[string]string, i interface{}) error {
 		switch metric := i.(type) {
 		case metrics.Counter:
-			exp.publishCounter(name, metric)
+			exp.publishCounter(name+tags, metric)
 		case metrics.Gauge:
-			exp.publishGauge(name, metric)
+			exp.publishGauge(name+tags, metric)
 		case metrics.GaugeFloat64:
-			exp.publishGaugeFloat64(name, metric)
+			exp.publishGaugeFloat64(name+tags, metric)
 		// case metrics.Histogram:
-		// 	exp.publishHistogram(name,  metric)
+		// 	exp.publishHistogram(name+tags,  metric)
 		// case metrics.Meter:
-		// 	exp.publishMeter(name,  metric)
+		// 	exp.publishMeter(name+tags,  metric)
 		// case metrics.Timer:
-		// 	exp.publishTimer(name, metric)
+		// 	exp.publishTimer(name+tags, metric)
 		default:
 			panic(fmt.Sprintf("unsupported type for '%s': %T", name, i))
 		}

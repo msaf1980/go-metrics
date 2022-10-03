@@ -12,26 +12,26 @@ func TestWritesT(t *testing.T) {
 	res, l, r, c, wg := newTestServer(t, "foobar")
 	defer r.UnregisterAll()
 
-	metrics.GetOrRegisterCounterT("counter", ";tag1=value1;tag21=value21", r).Inc(2)
+	metrics.GetOrRegisterCounterT("counter", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Inc(2)
 	length += 2
 
-	metrics.GetOrRegisterDifferT("differ", ";tag1=value1;tag21=value21", r).Update(3)
-	metrics.GetOrRegisterDifferT("differ", ";tag1=value1;tag21=value21", r).Update(9)
+	metrics.GetOrRegisterDifferT("differ", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(3)
+	metrics.GetOrRegisterDifferT("differ", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(9)
 	metrics.GetOrRegisterGauge("gauge", r).Update(4) // non tagged
-	metrics.GetOrRegisterGaugeT("gauge", ";tag1=value1;tag21=value21", r).Update(3)
-	metrics.GetOrRegisterGaugeFloat64T("gauge_float", ";tag1=value1;tag21=value21", r).Update(2.1)
+	metrics.GetOrRegisterGaugeT("gauge", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(3)
+	metrics.GetOrRegisterGaugeFloat64T("gauge_float", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(2.1)
 	length += 3
 
-	// metrics.GetOrRegisterTimerT("timer", ";tag1=value1;tag21=value21", r).Update(time.Second * 5)
-	// metrics.GetOrRegisterTimerT("timer", ";tag1=value1;tag21=value21", r).Update(time.Second * 4)
-	// metrics.GetOrRegisterTimerT("timer", ";tag1=value1;tag21=value21", r).Update(time.Second * 3)
-	// metrics.GetOrRegisterTimerT("timer", ";tag1=value1;tag21=value21", r).Update(time.Second * 2)
-	// metrics.GetOrRegisterTimerT("timer", ";tag1=value1;tag21=value21", r).Update(time.Second * 1)
+	// metrics.GetOrRegisterTimerT("timer", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(time.Second * 5)
+	// metrics.GetOrRegisterTimerT("timer", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(time.Second * 4)
+	// metrics.GetOrRegisterTimerT("timer", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(time.Second * 3)
+	// metrics.GetOrRegisterTimerT("timer", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(time.Second * 2)
+	// metrics.GetOrRegisterTimerT("timer", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(time.Second * 1)
 	// length += 10
 
 	// // TODO: Use a mock meter rather than wasting 10s to get a QPS.
 	// for i := 0; i < 10*4; i++ {
-	// 	metrics.GetOrRegisterMeterT("meter", ";tag1=value1;tag21=value21", r).Mark(1)
+	// 	metrics.GetOrRegisterMeterT("meter", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Mark(1)
 	// 	// metrics.GetOrRegisterHistogram("histogram", r, metrics.NewUniformSample(100)).Update(1)
 	// 	time.Sleep(200 * time.Millisecond)
 	// }

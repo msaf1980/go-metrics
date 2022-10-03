@@ -12,16 +12,16 @@ func BenchmarkRegistry(b *testing.B) {
 	r.Register("foo", NewCounter())
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		r.Each(func(string, string, interface{}) error { return nil })
+		r.Each(func(string, string, map[string]string, interface{}) error { return nil })
 	}
 }
 
 func BenchmarkRegistryT(b *testing.B) {
 	r := NewRegistry()
-	r.RegisterT("foo", ";tag1=value1;tag21=value21", NewCounter())
+	r.RegisterT("foo", map[string]string{"tag1": "value1", "tag21": "value21"}, NewCounter)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		r.Each(func(string, string, interface{}) error { return nil })
+		r.Each(func(string, string, map[string]string, interface{}) error { return nil })
 	}
 }
 
@@ -35,7 +35,7 @@ func BenchmarkRegistry1000(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		v := v[:0]
-		r.Each(func(k, _ string, _ interface{}) error {
+		r.Each(func(k, _ string, _ map[string]string, _ interface{}) error {
 			v = append(v, k)
 			return nil
 		})
@@ -46,13 +46,13 @@ func BenchmarkRegistry1000T(b *testing.B) {
 	r := NewRegistry()
 	n := 1000
 	for i := 0; i < n; i++ {
-		r.RegisterT(fmt.Sprintf("foo%07d", i), ";tag1=value1;tag21=value21", NewCounter)
+		r.RegisterT(fmt.Sprintf("foo%07d", i), map[string]string{"tag1": "value1", "tag21": "value21"}, NewCounter)
 	}
 	v := make([]string, n)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		v := v[:0]
-		r.Each(func(k, _ string, _ interface{}) error {
+		r.Each(func(k, _ string, _ map[string]string, _ interface{}) error {
 			v = append(v, k)
 			return nil
 		})
@@ -69,7 +69,7 @@ func BenchmarkRegistry10000(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		v := v[:0]
-		r.Each(func(k, _ string, _ interface{}) error {
+		r.Each(func(k, _ string, _ map[string]string, _ interface{}) error {
 			v = append(v, k)
 			return nil
 		})
@@ -80,13 +80,13 @@ func BenchmarkRegistry10000T(b *testing.B) {
 	r := NewRegistry()
 	n := 10000
 	for i := 0; i < n; i++ {
-		r.RegisterT(fmt.Sprintf("foo%07d", i), ";tag1=value1;tag21=value21", NewCounter)
+		r.RegisterT(fmt.Sprintf("foo%07d", i), map[string]string{"tag1": "value1", "tag21": "value21"}, NewCounter)
 	}
 	v := make([]string, n)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		v := v[:0]
-		r.Each(func(k, _ string, _ interface{}) error {
+		r.Each(func(k, _ string, _ map[string]string, _ interface{}) error {
 			v = append(v, k)
 			return nil
 		})
@@ -105,7 +105,7 @@ func BenchmarkRegistry10000_RegisterT(b *testing.B) {
 	r := NewRegistry()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		r.GetOrRegisterT(strconv.FormatInt(int64(i), 10), ";tag1=value1;tag21=value21", NewCounter)
+		r.GetOrRegisterT(strconv.FormatInt(int64(i), 10), map[string]string{"tag1": "value1", "tag21": "value21"}, NewCounter)
 	}
 }
 
@@ -126,7 +126,7 @@ func BenchmarkRegistryParallelT(b *testing.B) {
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
-			r.GetOrRegisterT(strconv.FormatInt(atomic.AddInt64(&i, 1), 10), ";tag1=value1;tag21=value21", NewCounter)
+			r.GetOrRegisterT(strconv.FormatInt(atomic.AddInt64(&i, 1), 10), map[string]string{"tag1": "value1", "tag21": "value21"}, NewCounter)
 		}
 	})
 }
@@ -135,7 +135,7 @@ func TestRegistry(t *testing.T) {
 	r := NewRegistry()
 	r.Register("foo", NewCounter())
 	i := 0
-	r.Each(func(name, _ string, iface interface{}) error {
+	r.Each(func(name, _ string, _ map[string]string, iface interface{}) error {
 		i++
 		if name != "foo" {
 			t.Fatal(name)
@@ -150,7 +150,7 @@ func TestRegistry(t *testing.T) {
 	}
 	r.Unregister("foo")
 	i = 0
-	r.Each(func(string, string, interface{}) error { i++; return nil })
+	r.Each(func(string, string, map[string]string, interface{}) error { i++; return nil })
 	if i != 0 {
 		t.Fatal(i)
 	}
@@ -165,7 +165,7 @@ func TestRegistryDuplicate(t *testing.T) {
 		t.Fatal(err)
 	}
 	i := 0
-	r.Each(func(name, tags string, iface interface{}) error {
+	r.Each(func(name, tags string, _ map[string]string, iface interface{}) error {
 		i++
 		if _, ok := iface.(Counter); !ok {
 			t.Fatal(iface)
@@ -200,7 +200,7 @@ func TestRegistryGetOrRegister(t *testing.T) {
 	}
 
 	i := 0
-	r.Each(func(name, tags string, iface interface{}) error {
+	r.Each(func(name, tags string, _ map[string]string, iface interface{}) error {
 		i++
 		if name != "foo" {
 			t.Fatal(name)
@@ -226,7 +226,7 @@ func TestRegistryGetOrRegisterWithLazyInstantiation(t *testing.T) {
 	}
 
 	i := 0
-	r.Each(func(name, tags string, iface interface{}) error {
+	r.Each(func(name, tags string, _ map[string]string, iface interface{}) error {
 		i++
 		if name != "foo" {
 			t.Fatal(name)

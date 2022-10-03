@@ -23,11 +23,11 @@ func GetOrRegisterGaugeFloat64(name string, r Registry) GaugeFloat64 {
 
 // GetOrRegisterGaugeFloat64T returns an existing GaugeFloat64 or constructs and registers a
 // new StandardGaugeFloat64.
-func GetOrRegisterGaugeFloat64T(name, tags string, r Registry) GaugeFloat64 {
+func GetOrRegisterGaugeFloat64T(name string, tagsMap map[string]string, r Registry) GaugeFloat64 {
 	if nil == r {
 		r = DefaultRegistry
 	}
-	return r.GetOrRegisterT(name, tags, NewGaugeFloat64()).(GaugeFloat64)
+	return r.GetOrRegisterT(name, tagsMap, NewGaugeFloat64()).(GaugeFloat64)
 }
 
 // NewGaugeFloat64 constructs a new StandardGaugeFloat64.
@@ -51,12 +51,12 @@ func NewRegisteredGaugeFloat64(name string, r Registry) GaugeFloat64 {
 }
 
 // NewRegisteredGaugeFloat64T constructs and registers a new StandardGaugeFloat64.
-func NewRegisteredGaugeFloat64T(name, tags string, r Registry) GaugeFloat64 {
+func NewRegisteredGaugeFloat64T(name string, tagsMap map[string]string, r Registry) GaugeFloat64 {
 	c := NewGaugeFloat64()
 	if nil == r {
 		r = DefaultRegistry
 	}
-	r.RegisterT(name, tags, c)
+	r.RegisterT(name, tagsMap, c)
 	return c
 }
 
@@ -79,12 +79,12 @@ func NewRegisteredFunctionalGaugeFloat64(name string, r Registry, f func() float
 }
 
 // NewRegisteredFunctionalGaugeT constructs and registers a new StandardGauge.
-func NewRegisteredFunctionalGaugeFloat64T(name, tags string, r Registry, f func() float64) GaugeFloat64 {
+func NewRegisteredFunctionalGaugeFloat64T(name string, tagsMap map[string]string, r Registry, f func() float64) GaugeFloat64 {
 	c := NewFunctionalGaugeFloat64(f)
 	if nil == r {
 		r = DefaultRegistry
 	}
-	r.RegisterT(name, tags, c)
+	r.RegisterT(name, tagsMap, c)
 	return c
 }
 
