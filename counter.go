@@ -4,7 +4,7 @@ import "sync/atomic"
 
 // Counters hold an uint64 value that can be incremented only
 type Counter interface {
-	Clear()
+	Clear() uint64
 	Count() uint64
 	Inc(uint64)
 	Snapshot() Counter
@@ -60,7 +60,7 @@ func NewRegisteredCounterT(name string, tagsMap map[string]string, r Registry) C
 type CounterSnapshot uint64
 
 // Clear panics.
-func (CounterSnapshot) Clear() {
+func (CounterSnapshot) Clear() uint64 {
 	panic("Clear called on a CounterSnapshot")
 }
 
@@ -79,7 +79,7 @@ func (c CounterSnapshot) Snapshot() Counter { return c }
 type NilCounter struct{}
 
 // Clear is a no-op.
-func (NilCounter) Clear() {}
+func (NilCounter) Clear() uint64 { return 0 }
 
 // Count is a no-op.
 func (NilCounter) Count() uint64 { return 0 }
@@ -97,8 +97,8 @@ type StandardCounter struct {
 }
 
 // Clear sets the Counter to zero.
-func (c *StandardCounter) Clear() {
-	atomic.StoreUint64(&c.count, 0)
+func (c *StandardCounter) Clear() uint64 {
+	return atomic.SwapUint64(&c.count, 0)
 }
 
 // Count returns the current count.

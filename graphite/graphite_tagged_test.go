@@ -17,8 +17,8 @@ func TestWritesT(t *testing.T) {
 
 	metrics.GetOrRegisterDownCounterT("dcounter", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Dec(4)
 
-	metrics.GetOrRegisterDifferT("differ", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(3)
-	metrics.GetOrRegisterDifferT("differ", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(9)
+	metrics.GetOrRegisterDifferT("differ", map[string]string{"tag1": "value1", "tag21": "value21"}, r, 0).Update(3)
+	metrics.GetOrRegisterDifferT("differ", map[string]string{"tag1": "value1", "tag21": "value21"}, r, 0).Update(9)
 	metrics.GetOrRegisterGauge("gauge", r).Update(4) // non tagged
 	metrics.GetOrRegisterGaugeT("gauge", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(3)
 	metrics.GetOrRegisterGaugeFloat64T("gauge_float", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(2.1)

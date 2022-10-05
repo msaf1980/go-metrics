@@ -5,6 +5,7 @@ import "sync/atomic"
 // Gauges hold an int64 value that can be set arbitrarily.
 type Gauge interface {
 	Snapshot() Gauge
+	Clear() int64
 	Update(int64)
 	Value() int64
 }
@@ -89,6 +90,11 @@ type GaugeSnapshot int64
 // Snapshot returns the snapshot.
 func (g GaugeSnapshot) Snapshot() Gauge { return g }
 
+// Clear panics.
+func (g GaugeSnapshot) Clear() int64 {
+	panic("Clear called on a GaugeSnapshot")
+}
+
 // Update panics.
 func (GaugeSnapshot) Update(int64) {
 	panic("Update called on a GaugeSnapshot")
@@ -102,6 +108,9 @@ type NilGauge struct{}
 
 // Snapshot is a no-op.
 func (NilGauge) Snapshot() Gauge { return NilGauge{} }
+
+// Clear is a no-op.
+func (NilGauge) Clear() int64 { return 0 }
 
 // Update is a no-op.
 func (NilGauge) Update(v int64) {}
@@ -118,6 +127,11 @@ type StandardGauge struct {
 // Snapshot returns a read-only copy of the gauge.
 func (g *StandardGauge) Snapshot() Gauge {
 	return GaugeSnapshot(g.Value())
+}
+
+// Clear sets the DownCounter to zero.
+func (g *StandardGauge) Clear() int64 {
+	return atomic.SwapInt64(&g.value, 0)
 }
 
 // Update updates the gauge's value.
@@ -146,4 +160,9 @@ func (g FunctionalGauge) Snapshot() Gauge { return GaugeSnapshot(g.Value()) }
 // Update panics.
 func (FunctionalGauge) Update(int64) {
 	panic("Update called on a FunctionalGauge")
+}
+
+// Clear panics.
+func (g FunctionalGauge) Clear() int64 {
+	panic("Clear called on a FunctionalGauge")
 }

@@ -423,7 +423,7 @@ func BenchmarkAll(b *testing.B) {
 	// 100 number gauges
 	differ := make([]metrics.Gauge, 50)
 	for i := 0; i < len(differ); i++ {
-		differ[i] = metrics.GetOrRegisterDiffer("differ", r)
+		differ[i] = metrics.GetOrRegisterDiffer("differ", r, 0)
 	}
 	g := make([]metrics.Gauge, 50)
 	for i := 0; i < len(g); i++ {
@@ -485,7 +485,7 @@ func BenchmarkAllT(b *testing.B) {
 	// 100 number gauges
 	differ := make([]metrics.Gauge, 50)
 	for i := 0; i < len(differ); i++ {
-		differ[i] = metrics.GetOrRegisterDifferT("differ", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
+		differ[i] = metrics.GetOrRegisterDifferT("differ", map[string]string{"tag1": "value1", "tag21": "value21"}, r, 0)
 	}
 	g := make([]metrics.Gauge, 50)
 	for i := 0; i < len(g); i++ {
@@ -540,7 +540,7 @@ func BenchmarkOnce(b *testing.B) {
 
 	c := metrics.GetOrRegisterCounter("foo", r)
 
-	differ := metrics.GetOrRegisterDiffer("differ", r)
+	differ := metrics.GetOrRegisterDiffer("differ", r, 0)
 	differ.Update(1)
 
 	g := metrics.GetOrRegisterGauge("bar", r)
@@ -580,7 +580,7 @@ func BenchmarkOnceT(b *testing.B) {
 
 	c := metrics.GetOrRegisterCounterT("foo", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 
-	differ := metrics.GetOrRegisterDifferT("differ", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
+	differ := metrics.GetOrRegisterDifferT("differ", map[string]string{"tag1": "value1", "tag21": "value21"}, r, 0)
 	differ.Update(1)
 
 	g := metrics.GetOrRegisterGaugeT("bar", map[string]string{"tag1": "value1", "tag21": "value21"}, r)

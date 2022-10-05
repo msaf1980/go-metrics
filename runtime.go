@@ -211,11 +211,13 @@ func CaptureRuntimeMemStatsOnce() {
 // fully-qualified Go symbols, i.e. runtime.MemStats.Alloc.
 func RegisterRuntimeMemStats(r Registry) {
 	registerRuntimeMetricsOnce.Do(func() {
+		runtime.ReadMemStats(&memStats)
+
 		runtimeMetrics.MemStats.Alloc = NewGauge()
 		runtimeMetrics.MemStats.BuckHashSys = NewGauge()
 		// runtimeMetrics.MemStats.DebugGC = NewGauge()
 		// runtimeMetrics.MemStats.EnableGC = NewGauge()
-		runtimeMetrics.MemStats.Frees = NewDiffer()
+		runtimeMetrics.MemStats.Frees = NewDiffer(int64(memStats.Frees))
 		runtimeMetrics.MemStats.HeapAlloc = NewGauge()
 		runtimeMetrics.MemStats.HeapIdle = NewGauge()
 		runtimeMetrics.MemStats.HeapInUse = NewGauge()
@@ -223,14 +225,15 @@ func RegisterRuntimeMemStats(r Registry) {
 		runtimeMetrics.MemStats.HeapReleased = NewGauge()
 		runtimeMetrics.MemStats.HeapSys = NewGauge()
 		runtimeMetrics.MemStats.LastGC = NewGauge()
-		runtimeMetrics.MemStats.Lookups = NewDiffer()
-		runtimeMetrics.MemStats.Mallocs = NewDiffer()
+		runtimeMetrics.MemStats.Lookups = NewDiffer(int64(memStats.Lookups))
+		runtimeMetrics.MemStats.Lookups = NewGauge()
+		runtimeMetrics.MemStats.Mallocs = NewDiffer(int64(memStats.Mallocs))
 		runtimeMetrics.MemStats.MCacheInUse = NewGauge()
 		runtimeMetrics.MemStats.MCacheSys = NewGauge()
 		runtimeMetrics.MemStats.MSpanInUse = NewGauge()
 		runtimeMetrics.MemStats.MSpanSys = NewGauge()
 		runtimeMetrics.MemStats.NextGC = NewGauge()
-		runtimeMetrics.MemStats.NumGC = NewDiffer()
+		runtimeMetrics.MemStats.NumGC = NewDiffer(int64(memStats.NextGC))
 		runtimeMetrics.MemStats.GCCPUFraction = NewGaugeFloat64()
 		// runtimeMetrics.MemStats.PauseNs = NewHistogram(NewExpDecaySample(1028, 0.015))
 		runtimeMetrics.MemStats.PauseTotalNs = NewGauge()
@@ -238,13 +241,11 @@ func RegisterRuntimeMemStats(r Registry) {
 		runtimeMetrics.MemStats.StackSys = NewGauge()
 		runtimeMetrics.MemStats.Sys = NewGauge()
 		runtimeMetrics.MemStats.TotalAlloc = NewGauge()
-		runtimeMetrics.NumCgoCall = NewDiffer()
+		runtimeMetrics.NumCgoCall = NewDiffer(numCgoCall())
+		// runtimeMetrics.NumCgoCall = NewGauge()
 		runtimeMetrics.NumGoroutine = NewGauge()
 		runtimeMetrics.NumThread = NewGauge()
 		// runtimeMetrics.ReadMemStats = NewTimer()
-
-		CaptureRuntimeMemStatsOnce()
-
 		r.Register(RuntimeNames.MemStats.Alloc, runtimeMetrics.MemStats.Alloc)
 		r.Register(RuntimeNames.MemStats.BuckHashSys, runtimeMetrics.MemStats.BuckHashSys)
 		// r.Register("runtime.mem_stats.DebugGC", runtimeMetrics.MemStats.DebugGC)
@@ -276,5 +277,7 @@ func RegisterRuntimeMemStats(r Registry) {
 		r.Register(RuntimeNames.NumGoroutine, runtimeMetrics.NumGoroutine)
 		r.Register(RuntimeNames.NumThread, runtimeMetrics.NumThread)
 		// r.Register("runtime.read_mem_stats", runtimeMetrics.ReadMemStats)
+
+		CaptureRuntimeMemStatsOnce()
 	})
 }

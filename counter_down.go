@@ -4,7 +4,7 @@ import "sync/atomic"
 
 // DownCounters hold an int64 value that can be incremented/decremented
 type DownCounter interface {
-	Clear()
+	Clear() int64
 	Count() int64
 	Inc(int64)
 	Dec(int64)
@@ -61,7 +61,7 @@ func NewRegisteredDownCounterT(name string, tagsMap map[string]string, r Registr
 type DownCounterSnapshot uint64
 
 // Clear panics.
-func (DownCounterSnapshot) Clear() {
+func (DownCounterSnapshot) Clear() int64 {
 	panic("Clear called on a DownCounterSnapshot")
 }
 
@@ -85,7 +85,7 @@ func (c DownCounterSnapshot) Snapshot() DownCounter { return c }
 type NilDownCounter struct{}
 
 // Clear is a no-op.
-func (NilDownCounter) Clear() {}
+func (NilDownCounter) Clear() int64 { return 0 }
 
 // Count is a no-op.
 func (NilDownCounter) Count() int64 { return 0 }
@@ -105,8 +105,8 @@ type StandardDownCounter struct {
 }
 
 // Clear sets the DownCounter to zero.
-func (c *StandardDownCounter) Clear() {
-	atomic.StoreInt64(&c.count, 0)
+func (c *StandardDownCounter) Clear() int64 {
+	return atomic.SwapInt64(&c.count, 0)
 }
 
 // Count returns the current count.

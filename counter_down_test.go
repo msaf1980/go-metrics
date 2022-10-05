@@ -59,6 +59,13 @@ func TestDownCounterInc2(t *testing.T) {
 	if count := c.Count(); count != 2 {
 		t.Errorf("c.Count(): 2 != %v\n", count)
 	}
+	n := c.Clear()
+	if n != 2 {
+		t.Errorf("c.Clear(): 2 != %v\n", n)
+	}
+	if count := c.Count(); count != 0 {
+		t.Errorf("c.Count(): 0 != %v\n", count)
+	}
 }
 
 func TestDownCounterSnapshot(t *testing.T) {

@@ -92,8 +92,8 @@ func TestWrites(t *testing.T) {
 	metrics.GetOrRegisterCounter("counter", r).Inc(2)
 	metrics.GetOrRegisterDownCounter("dcounter", r).Dec(4)
 
-	metrics.GetOrRegisterDiffer("differ", r).Update(3)
-	metrics.GetOrRegisterDiffer("differ", r).Update(9)
+	metrics.GetOrRegisterDiffer("differ", r, 0).Update(3)
+	metrics.GetOrRegisterDiffer("differ", r, 0).Update(9)
 	metrics.GetOrRegisterGauge("gauge", r).Update(3)
 	metrics.GetOrRegisterGaugeFloat64("gauge_float", r).Update(2.1)
 
