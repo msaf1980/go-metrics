@@ -32,6 +32,10 @@ func TestWritesT(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	rate := metrics.GetOrRegisterRateT("ratefoo", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
+	rate.Update(1, 1e9)
+	rate.Update(7, 3e9)
+
 	// metrics.GetOrRegisterTimerT("timer", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(time.Second * 5)
 	// metrics.GetOrRegisterTimerT("timer", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(time.Second * 4)
 	// metrics.GetOrRegisterTimerT("timer", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(time.Second * 3)
@@ -78,6 +82,9 @@ func TestWritesT(t *testing.T) {
 		"footag.histogram;tag1=value1;tag21=value21;label=20;le=20":   {V: 0},
 		"footag.histogram;tag1=value1;tag21=value21;label=inf;le=inf": {V: 0},
 		"footag.histogram;tag1=value1;tag21=value21;label=total":      {V: 2},
+		// rate
+		"footag.ratefoo.value;tag1=value1;tag21=value21": {V: 6},
+		"footag.ratefoo.rate;tag1=value1;tag21=value21":  {V: 3},
 		// // meter
 		// "foobar.meter.count;tag1=value1;tag21=value21":          {V: 40.0},
 		// "foobar.meter.mean;tag1=value1;tag21=value21":           {V: 5.12},

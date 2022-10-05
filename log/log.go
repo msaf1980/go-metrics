@@ -61,6 +61,9 @@ func LogScaledOnCue(r metrics.Registry, ch chan interface{}, scale time.Duration
 					total += vals[i]
 				}
 				l.Printf("histogram %s%s %s: %9d\n", name, tags, metric.NameTotal(), total)
+			case metrics.Rate:
+				v, rate := metric.Values()
+				l.Printf("rate %s%s value: %f rate: %f\n", name, tags, v, rate)
 				// case metrics.Histogram:
 				// 	h := metric.Snapshot()
 				// 	ps := h.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999})

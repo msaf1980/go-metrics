@@ -81,7 +81,7 @@ func TestGetOrRegisterFunctionalGauge(t *testing.T) {
 
 func ExampleGetOrRegisterGauge() {
 	m := "server.bytes_sent"
-	g := GetOrRegisterGauge(m, nil)
+	g := GetOrRegisterGauge(m, NewRegistry())
 	g.Update(47)
 	fmt.Println(g.Value()) // Output: 47
 }

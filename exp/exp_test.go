@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	json "github.com/json-iterator/go"
 	"github.com/msaf1980/go-metrics"
 	"github.com/stretchr/testify/assert"
+	"github.com/xhhuango/json"
 )
 
 const keyAddress = "address"
@@ -39,6 +39,10 @@ func TestExp(t *testing.T) {
 	if err := r.RegisterT("histogram", map[string]string{"tag1": "value1", "tag21": "value21"}, ht); err != nil {
 		t.Fatal(err)
 	}
+
+	rate := metrics.GetOrRegisterRate("ratefoo", r)
+	rate.Update(1, 1e9)
+	rate.Update(7, 3e9)
 
 	mux := http.NewServeMux()
 	mux.Handle("/debug/metrics", ExpHandler(r, false))
@@ -91,6 +95,8 @@ func TestExp(t *testing.T) {
 		"histogram;tag1=value1;tag21=value21;label=req_20;le=20":   0,
 		"histogram;tag1=value1;tag21=value21;label=req_inf;le=inf": 0,
 		"histogram;tag1=value1;tag21=value21;label=total":          2,
+		"ratefoo.value": 6,
+		"ratefoo.rate":  3,
 	}
 	if err = json.Unmarshal(body, &got); err == nil {
 		assert.Equal(t, want, got)

@@ -378,6 +378,14 @@ func (g *Graphite) send(r metrics.Registry) error {
 			if err = g.writeHistogramMetric(name, metric.NameTotal(), "", tags, total, now); err != nil {
 				return err
 			}
+		case metrics.Rate:
+			v, rate := metric.Values()
+			if err = g.writeFloatMetric(name, ".value", tags, v, now); err != nil {
+				return err
+			}
+			if err = g.writeFloatMetric(name, ".rate", tags, rate, now); err != nil {
+				return err
+			}
 		// case metrics.Histogram:
 		// 	h := metric.Snapshot()
 		// 	ps := h.Percentiles(g.c.Percentiles)

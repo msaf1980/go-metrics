@@ -58,6 +58,10 @@ func (exp *exp) expHandler(w http.ResponseWriter, r *http.Request) {
 			} else {
 				fmt.Fprintf(w, ",\n  \"%s%s\": %d", name, tags+";label="+metric.NameTotal(), total)
 			}
+		case metrics.Rate:
+			v, rate := metric.Values()
+			fmt.Fprintf(w, "\n  \"%s.value%s\": %f,", name, tags, v)
+			fmt.Fprintf(w, "\n  \"%s.rate%s\": %f", name, tags, rate)
 		default:
 			fmt.Fprintf(w, "\n  \"%s%s\": NaN", name, tags)
 			log.Printf("\n  \"%s%s\": \"<UHHADLED:%T>\"", name, tags, i)

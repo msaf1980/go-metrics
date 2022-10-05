@@ -41,24 +41,30 @@ func (ma *meterUpdater) Register(m Updated) {
 func (ma *meterUpdater) Unregister(m Updated) {
 	ma.Lock()
 	delete(ma.meters, m)
+	if len(ma.meters) == 0 {
+		ma.stop()
+	}
 	ma.Unlock()
 }
 
-func (ma *meterUpdater) Stop() {
-	ma.RLock()
-	defer ma.RUnlock()
+func (ma *meterUpdater) stop() {
 	if ma.started {
 		ma.close <- struct{}{}
 		ma.started = false
 	}
 }
 
+func (ma *meterUpdater) Stop() {
+	ma.RLock()
+	defer ma.RUnlock()
+	ma.stop()
+}
+
 func (ma *meterUpdater) StopIfEmpty() {
 	ma.RLock()
 	defer ma.RUnlock()
-	if ma.started && len(ma.meters) == 0 {
-		ma.close <- struct{}{}
-		ma.started = false
+	if len(ma.meters) == 0 {
+		ma.stop()
 	}
 }
 

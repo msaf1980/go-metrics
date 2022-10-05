@@ -274,6 +274,10 @@ func (r *StandardRegistry) GetAll() map[string]map[string]interface{} {
 				total += vals[i]
 			}
 			values[metric.NameTotal()] = total
+		case Rate:
+			v, rate := metric.Values()
+			values["value"] = v
+			values["rate"] = rate
 			// case Histogram:
 			// 	h := metric.Snapshot()
 			// 	ps := h.Percentiles([]float64{0.5, 0.75, 0.95, 0.99, 0.999})
@@ -322,8 +326,7 @@ func (r *StandardRegistry) GetAll() map[string]map[string]interface{} {
 func (r *StandardRegistry) Unregister(name string) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	r.stop(name)
-	delete(r.metrics, name)
+	r.unregister(name)
 }
 
 // Unregister the metric with the given name.
@@ -332,8 +335,7 @@ func (r *StandardRegistry) UnregisterT(name string, tagsMap map[string]string) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	ntags := NameTagged{Name: name, Tags: tags}
-	r.stopT(ntags)
-	delete(r.metricsT, ntags)
+	r.unregisterT(ntags)
 }
 
 // Unregister all metrics.  (Mostly for testing.)
@@ -341,12 +343,10 @@ func (r *StandardRegistry) UnregisterAll() {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	for name := range r.metrics {
-		r.stop(name)
-		delete(r.metrics, name)
+		r.unregister(name)
 	}
 	for ntags := range r.metricsT {
-		r.stopT(ntags)
-		delete(r.metricsT, ntags)
+		r.unregisterT(ntags)
 	}
 }
 
@@ -380,7 +380,7 @@ func (r *StandardRegistry) register(name string, i interface{}) error {
 		updater.Register(s)
 	}
 	switch i.(type) {
-	case Counter, DownCounter, Gauge, GaugeFloat64, Healthcheck, HistogramInterface:
+	case Counter, DownCounter, Gauge, GaugeFloat64, Healthcheck, HistogramInterface, Rate:
 		// , Histogram, Meter, Timer:
 		r.metrics[name] = i
 	default:
@@ -397,7 +397,7 @@ func (r *StandardRegistry) registerT(ntags NameTagged, v *ValTagged) error {
 		updater.Register(s)
 	}
 	switch v.I.(type) {
-	case Counter, DownCounter, Gauge, GaugeFloat64, Healthcheck, HistogramInterface:
+	case Counter, DownCounter, Gauge, GaugeFloat64, Healthcheck, HistogramInterface, Rate:
 		// , Histogram, Meter, Timer:
 		r.metricsT[ntags] = v
 	default:
@@ -406,19 +406,21 @@ func (r *StandardRegistry) registerT(ntags NameTagged, v *ValTagged) error {
 	return nil
 }
 
-func (r *StandardRegistry) stop(name string) {
+func (r *StandardRegistry) unregister(name string) {
 	if i, ok := r.metrics[name]; ok {
 		if s, ok := i.(Updated); ok {
 			updater.Unregister(s)
 		}
+		delete(r.metrics, name)
 	}
 }
 
-func (r *StandardRegistry) stopT(ntags NameTagged) {
+func (r *StandardRegistry) unregisterT(ntags NameTagged) {
 	if v, ok := r.metricsT[ntags]; ok {
 		if s, ok := v.I.(Updated); ok {
 			updater.Unregister(s)
 		}
+		delete(r.metricsT, ntags)
 	}
 }
 

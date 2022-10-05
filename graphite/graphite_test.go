@@ -97,14 +97,13 @@ func TestWrites(t *testing.T) {
 	metrics.GetOrRegisterGauge("gauge", r).Update(3)
 	metrics.GetOrRegisterGaugeFloat64("gauge_float", r).Update(2.1)
 
-	h := metrics.NewVHistogram([]int64{1, 2, 5, 8, 20}, nil, "", "")
+	h := metrics.GetOrRegisterVHistogram("histogram", r, []int64{1, 2, 5, 8, 20}, nil, "", "")
 	h.Add(2)
 	h.Add(6)
-	if err := r.Register("histogram", h); err != nil {
-		l.Close()
-		wg.Wait()
-		t.Fatal(err)
-	}
+
+	rate := metrics.GetOrRegisterRate("ratefoo", r)
+	rate.Update(1, 1e9)
+	rate.Update(7, 3e9)
 
 	// metrics.GetOrRegisterTimer("timer", r).Update(time.Second * 5)
 	// metrics.GetOrRegisterTimer("timer", r).Update(time.Second * 4)
@@ -143,6 +142,9 @@ func TestWrites(t *testing.T) {
 		"foobar.histogram.8":     {V: 1},
 		"foobar.histogram.inf":   {V: 0},
 		"foobar.histogram.total": {V: 2},
+		// rate
+		"foobar.ratefoo.value": {V: 6},
+		"foobar.ratefoo.rate":  {V: 3},
 		// // meter
 		// "foobar.meter.count":          {V: 40.0},
 		// "foobar.meter.mean":           {V: 5.12},
