@@ -376,6 +376,9 @@ func (r *StandardRegistry) register(name string, i interface{}) error {
 	if _, ok := r.metrics[name]; ok {
 		return DuplicateMetric(name)
 	}
+	if s, ok := i.(Updated); ok {
+		updater.Register(s)
+	}
 	switch i.(type) {
 	case Counter, DownCounter, Gauge, GaugeFloat64, Healthcheck, HistogramInterface:
 		// , Histogram, Meter, Timer:
@@ -390,6 +393,9 @@ func (r *StandardRegistry) registerT(ntags NameTagged, v *ValTagged) error {
 	if _, ok := r.metricsT[ntags]; ok {
 		return DuplicateMetric(ntags.Name + ntags.Tags)
 	}
+	if s, ok := v.I.(Updated); ok {
+		updater.Register(s)
+	}
 	switch v.I.(type) {
 	case Counter, DownCounter, Gauge, GaugeFloat64, Healthcheck, HistogramInterface:
 		// , Histogram, Meter, Timer:
@@ -402,23 +408,18 @@ func (r *StandardRegistry) registerT(ntags NameTagged, v *ValTagged) error {
 
 func (r *StandardRegistry) stop(name string) {
 	if i, ok := r.metrics[name]; ok {
-		if s, ok := i.(Stoppable); ok {
-			s.Stop()
+		if s, ok := i.(Updated); ok {
+			updater.Unregister(s)
 		}
 	}
 }
 
 func (r *StandardRegistry) stopT(ntags NameTagged) {
 	if v, ok := r.metricsT[ntags]; ok {
-		if s, ok := v.I.(Stoppable); ok {
-			s.Stop()
+		if s, ok := v.I.(Updated); ok {
+			updater.Unregister(s)
 		}
 	}
-}
-
-// Stoppable defines the metrics which has to be stopped.
-type Stoppable interface {
-	Stop()
 }
 
 var DefaultRegistry Registry = NewRegistry()
