@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
+	json "github.com/json-iterator/go"
 	"github.com/msaf1980/go-metrics"
 	"github.com/stretchr/testify/assert"
-	"github.com/xhhuango/json"
 )
 
 const keyAddress = "address"
