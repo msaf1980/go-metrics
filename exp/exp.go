@@ -4,6 +4,7 @@ package exp
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/msaf1980/go-metrics"
@@ -28,6 +29,8 @@ func (exp *exp) expHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		switch metric := i.(type) {
 		case metrics.Counter:
+			fmt.Fprintf(w, "\n  \"%s%s\": %d", name, tags, metric.Count())
+		case metrics.DownCounter:
 			fmt.Fprintf(w, "\n  \"%s%s\": %d", name, tags, metric.Count())
 		case metrics.Gauge:
 			fmt.Fprintf(w, "\n  \"%s%s\": %d", name, tags, metric.Value())
@@ -56,7 +59,8 @@ func (exp *exp) expHandler(w http.ResponseWriter, r *http.Request) {
 				fmt.Fprintf(w, ",\n  \"%s%s\": %d", name, tags+";label="+metric.NameTotal(), total)
 			}
 		default:
-			fmt.Fprintf(w, "\n  \"%s%s\": <UHHADLED:%T>", name, tags, i)
+			fmt.Fprintf(w, "\n  \"%s%s\": NaN", name, tags)
+			log.Printf("\n  \"%s%s\": \"<UHHADLED:%T>\"", name, tags, i)
 		}
 		return nil
 	}, exp.minLock)

@@ -15,6 +15,8 @@ func TestWritesT(t *testing.T) {
 	// check for no conflicts with tagged counter
 	metrics.GetOrRegisterCounter("counter", r).Inc(2)
 
+	metrics.GetOrRegisterDownCounterT("dcounter", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Dec(4)
+
 	metrics.GetOrRegisterDifferT("differ", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(3)
 	metrics.GetOrRegisterDifferT("differ", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(9)
 	metrics.GetOrRegisterGauge("gauge", r).Update(4) // non tagged
@@ -62,6 +64,7 @@ func TestWritesT(t *testing.T) {
 		// count
 		"footag.counter;tag1=value1;tag21=value21": {V: 2.0},
 		"foobar.counter": {V: 2.0},
+		"footag.dcounter;tag1=value1;tag21=value21": {V: -4.0},
 		// gauge
 		"footag.differ;tag1=value1;tag21=value21": {V: 6.0},
 		"foobar.gauge":                                 {V: 4.0},

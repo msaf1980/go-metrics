@@ -257,6 +257,8 @@ func (r *StandardRegistry) GetAll() map[string]map[string]interface{} {
 		switch metric := i.(type) {
 		case Counter:
 			values["count"] = metric.Count()
+		case DownCounter:
+			values["count"] = metric.Count()
 		case Gauge:
 			values["value"] = metric.Value()
 		case GaugeFloat64:
@@ -375,7 +377,7 @@ func (r *StandardRegistry) register(name string, i interface{}) error {
 		return DuplicateMetric(name)
 	}
 	switch i.(type) {
-	case Counter, Gauge, GaugeFloat64, Healthcheck, HistogramInterface:
+	case Counter, DownCounter, Gauge, GaugeFloat64, Healthcheck, HistogramInterface:
 		// , Histogram, Meter, Timer:
 		r.metrics[name] = i
 	default:
@@ -389,7 +391,7 @@ func (r *StandardRegistry) registerT(ntags NameTagged, v *ValTagged) error {
 		return DuplicateMetric(ntags.Name + ntags.Tags)
 	}
 	switch v.I.(type) {
-	case Counter, Gauge, GaugeFloat64, Healthcheck, HistogramInterface:
+	case Counter, DownCounter, Gauge, GaugeFloat64, Healthcheck, HistogramInterface:
 		// , Histogram, Meter, Timer:
 		r.metricsT[ntags] = v
 	default:

@@ -19,6 +19,8 @@ func Syslog(r metrics.Registry, d time.Duration, w *syslog.Writer, minLock bool)
 			switch metric := i.(type) {
 			case metrics.Counter:
 				w.Info(fmt.Sprintf("counter %s%s count: %d", name, tags, metric.Count()))
+			case metrics.DownCounter:
+				w.Info(fmt.Sprintf("counter %s%s count: %d", name, tags, metric.Count()))
 			case metrics.Gauge:
 				w.Info(fmt.Sprintf("gauge %s%s value: %d", name, tags, metric.Value()))
 			case metrics.GaugeFloat64:

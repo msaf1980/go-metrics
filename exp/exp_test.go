@@ -4,7 +4,6 @@ package exp
 
 import (
 	"context"
-	"encoding/json"
 	"io"
 	"net"
 	"net/http"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/msaf1980/go-metrics"
 	"github.com/stretchr/testify/assert"
+	"github.com/xhhuango/json"
 )
 
 const keyAddress = "address"
@@ -23,6 +23,9 @@ func TestExp(t *testing.T) {
 
 	c := metrics.GetOrRegisterCounterT("count", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 	c.Inc(46)
+
+	dc := metrics.GetOrRegisterDownCounter("count", r)
+	dc.Dec(4)
 
 	h := metrics.NewUFixedHistogram(1, 3, 1, "req_", "")
 	h.Add(2)
@@ -75,6 +78,7 @@ func TestExp(t *testing.T) {
 	var got map[string]float64
 	want := map[string]float64{
 		"count;tag1=value1;tag21=value21": 46,
+		"count":                           -4,
 		"histogram.req_1":                 0,
 		"histogram.req_2":                 1,
 		"histogram.req_3":                 0,
@@ -91,6 +95,6 @@ func TestExp(t *testing.T) {
 	if err = json.Unmarshal(body, &got); err == nil {
 		assert.Equal(t, want, got)
 	} else {
-		t.Fatal(err)
+		t.Fatal(err, "\n", string(body))
 	}
 }

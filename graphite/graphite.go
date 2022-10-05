@@ -345,6 +345,12 @@ func (g *Graphite) send(r metrics.Registry) error {
 			if err = g.writeUintMetric(name, "", tags, metric.Count(), now); err != nil {
 				return err
 			}
+		case metrics.DownCounter:
+			// count := metric.Count()
+			// fmt.Fprintf(w, "%s.%s.count %d %d\n", c.Prefix, name, count, now)
+			if err = g.writeIntMetric(name, "", tags, metric.Count(), now); err != nil {
+				return err
+			}
 		case metrics.Gauge:
 			// fmt.Fprintf(w, "%s.%s.value %d %d\n", c.Prefix, name, metric.Value(), now)
 			if err = g.writeIntMetric(name, "", tags, metric.Value(), now); err != nil {

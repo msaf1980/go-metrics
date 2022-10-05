@@ -90,6 +90,7 @@ func TestWrites(t *testing.T) {
 	defer r.UnregisterAll()
 
 	metrics.GetOrRegisterCounter("counter", r).Inc(2)
+	metrics.GetOrRegisterDownCounter("dcounter", r).Dec(4)
 
 	metrics.GetOrRegisterDiffer("differ", r).Update(3)
 	metrics.GetOrRegisterDiffer("differ", r).Update(9)
@@ -128,7 +129,8 @@ func TestWrites(t *testing.T) {
 
 	want := map[string]test.Value{
 		// count
-		"foobar.counter": {V: 2.0},
+		"foobar.counter":  {V: 2.0},
+		"foobar.dcounter": {V: -4.0},
 		// gauge
 		"foobar.differ":      {V: 6.0},
 		"foobar.gauge":       {V: 3.0},
