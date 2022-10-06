@@ -83,13 +83,15 @@ type Graphite struct {
 // Graphite is a blocking exporter function which reports metrics in r
 // to a graphite server located at addr, flushing them every d duration
 // and prepending metric names with prefix.
-func New(d time.Duration, prefix string, host string) *Graphite {
+func New(flushInterval time.Duration, prefix string, host string, timeout time.Duration) *Graphite {
 	return WithConfig(&Config{
-		Host:          host,
-		FlushInterval: d,
-		DurationUnit:  time.Nanosecond,
-		Prefix:        prefix,
-		Percentiles:   []float64{0.5, 0.75, 0.95, 0.99, 0.999},
+		Host:           host,
+		FlushInterval:  flushInterval,
+		DurationUnit:   time.Nanosecond,
+		Prefix:         prefix,
+		Percentiles:    []float64{0.5, 0.75, 0.95, 0.99, 0.999},
+		Timeout:        timeout,
+		ConnectTimeout: timeout,
 	})
 }
 
