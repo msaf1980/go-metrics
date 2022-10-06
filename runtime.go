@@ -211,6 +211,10 @@ func CaptureRuntimeMemStatsOnce() {
 // fully-qualified Go symbols, i.e. runtime.MemStats.Alloc.
 func RegisterRuntimeMemStats(r Registry) {
 	registerRuntimeMetricsOnce.Do(func() {
+		if nil == r {
+			r = DefaultRegistry
+		}
+
 		runtimeMetrics.MemStats.Alloc = NewGauge()
 		runtimeMetrics.MemStats.BuckHashSys = NewGauge()
 		// runtimeMetrics.MemStats.DebugGC = NewGauge()

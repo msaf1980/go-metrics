@@ -323,6 +323,10 @@ func (g *Graphite) flush() (err error) {
 }
 
 func (g *Graphite) send(r metrics.Registry) error {
+	if nil == r {
+		r = metrics.DefaultRegistry
+	}
+
 	var err error
 
 	now := time.Now().Unix()

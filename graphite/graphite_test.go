@@ -14,7 +14,7 @@ import (
 )
 
 func ExampleGraphite() {
-	g := New(1*time.Second, "some.prefix", "127.0.0.1:2003")
+	g := New(1*time.Second, "some.prefix", "127.0.0.1:2003", time.Second)
 	g.Start(metrics.DefaultRegistry)
 	g.Stop()
 }
