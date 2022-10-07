@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"math"
 	"sort"
 	"strconv"
 	"strings"
@@ -16,12 +17,11 @@ type FHistogram interface {
 	AddLabelPrefix(string) FHistogram
 	SetNameTotal(string) FHistogram
 	Snapshot() FHistogram
-	Clear()
 	Add(v float64)
 	Weights() []float64
 }
 
-// GetOrRegisterFHistoram returns an existing FHistogram or constructs and registers
+// GetOrRegisterFHistogram returns an existing FHistogram or constructs and registers
 // a new FFixedHistorgam.
 func GetOrRegisterFFixedHistogram(name string, r Registry, startVal, endVal, width float64) FHistogram {
 	if nil == r {
@@ -32,7 +32,7 @@ func GetOrRegisterFFixedHistogram(name string, r Registry, startVal, endVal, wid
 	}).(FHistogram)
 }
 
-// GetOrRegisterHistoramT returns an existing Histogram or constructs and registers
+// GetOrRegisterHistogramT returns an existing Histogram or constructs and registers
 // a new FixedHistorgam.
 func GetOrRegisterFFixedHistogramT(name string, tagsMap map[string]string, r Registry, startVal, endVal, width float64) FHistogram {
 	if nil == r {
@@ -162,7 +162,7 @@ func (h *FHistogramSnapshot) Add(v float64) {
 	panic("Add called on a FHistogramSnapshot")
 }
 
-func (h *FHistogramSnapshot) Clear() {
+func (h *FHistogramSnapshot) Clear() []uint64 {
 	panic("Clear called on a FHistogramSnapshot")
 }
 
@@ -240,11 +240,13 @@ func (h *FHistogramStorage) Snapshot() FHistogram {
 	}
 }
 
-func (h *FHistogramStorage) Clear() {
+func (h *FHistogramStorage) Clear() []uint64 {
 	buckets := make([]uint64, len(h.buckets))
 	h.lock.Lock()
+	v := h.buckets
 	h.buckets = buckets
 	h.lock.Unlock()
+	return v
 }
 
 // A FFixedHistogram is implementation of FHistogram with fixed-size buckets.
@@ -274,7 +276,7 @@ func NewFFixedHistogram(startVal, endVal, width float64) FHistogram {
 	// fmtStr := fmt.Sprintf("%%s%%0%dd", maxLength)
 	for i := 0; i < len(weights); i++ {
 		if i == len(weights)-1 {
-			weights[i] = ge
+			weights[i] = math.MaxFloat64
 			weightsAliases[i] = "inf"
 			names[i] = weightsAliases[i]
 		} else {
@@ -346,7 +348,7 @@ func NewFVHistogram(weights []float64, names []string) *FVHistogram {
 	weightsAliases := make([]string, len(w))
 	copy(w, weights)
 	sort.Slice(w[:len(weights)-1], func(i, j int) bool { return w[i] < w[j] })
-	last := w[len(w)-2] + 1
+	// last := w[len(w)-2] + 1
 	ns := make([]string, len(w))
 
 	// fmtStr := fmt.Sprintf("%%s%%0%df", len(strconv.FormatFloat(last, 'f', -1, 64)))
@@ -358,7 +360,7 @@ func NewFVHistogram(weights []float64, names []string) *FVHistogram {
 			} else {
 				ns[i] = names[i]
 			}
-			w[i] = last
+			w[i] = math.MaxFloat64
 		} else {
 			weightsAliases[i] = strings.ReplaceAll(trimFloatZero(strconv.FormatFloat(w[i], 'f', 2, 64)), ".", "_")
 			if i >= len(names) || names[i] == "" {
@@ -397,13 +399,6 @@ func (h *FVHistogram) Snapshot() FHistogram {
 		total:          h.NameTotal(),
 		buckets:        h.Values(),
 	}
-}
-
-func (h *FVHistogram) Clear() {
-	buckets := make([]uint64, len(h.buckets))
-	h.lock.Lock()
-	h.buckets = buckets
-	h.lock.Unlock()
 }
 
 func (h *FVHistogram) Add(v float64) {

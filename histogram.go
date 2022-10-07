@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"math"
 	"sort"
 	"strconv"
 	"sync"
@@ -8,6 +9,7 @@ import (
 
 // A HistogramInterface is some strped (no Weights{}, it's not need in registry Each iterator) version of Histogram interface
 type HistogramInterface interface {
+	Clear() []uint64
 	Values() []uint64
 	Labels() []string
 	NameTotal() string
@@ -24,12 +26,11 @@ type Histogram interface {
 	AddLabelPrefix(string) Histogram
 	SetNameTotal(string) Histogram
 	Snapshot() Histogram
-	Clear()
 	Add(v int64)
 	Weights() []int64
 }
 
-// GetOrRegisterHistoram returns an existing Histogram or constructs and registers
+// GetOrRegisterHistogram returns an existing Histogram or constructs and registers
 // a new FixedHistorgam.
 func GetOrRegisterFixedHistogram(name string, r Registry, startVal, endVal, width int64) Histogram {
 	if nil == r {
@@ -40,7 +41,7 @@ func GetOrRegisterFixedHistogram(name string, r Registry, startVal, endVal, widt
 	}).(Histogram)
 }
 
-// GetOrRegisterHistoramT returns an existing Histogram or constructs and registers
+// GetOrRegisterHistogramT returns an existing Histogram or constructs and registers
 // a new FixedHistorgam.
 func GetOrRegisterFixedHistogramT(name string, tagsMap map[string]string, r Registry, startVal, endVal, width int64) Histogram {
 	if nil == r {
@@ -157,7 +158,7 @@ func (h *HistogramSnapshot) Add(v int64) {
 	panic("Add called on a HistogramSnapshot")
 }
 
-func (h *HistogramSnapshot) Clear() {
+func (h *HistogramSnapshot) Clear() []uint64 {
 	panic("Clear called on a HistogramSnapshot")
 }
 
@@ -235,11 +236,13 @@ func (h *HistogramStorage) Snapshot() Histogram {
 	}
 }
 
-func (h *HistogramStorage) Clear() {
+func (h *HistogramStorage) Clear() []uint64 {
 	buckets := make([]uint64, len(h.buckets))
 	h.lock.Lock()
+	v := h.buckets
 	h.buckets = buckets
 	h.lock.Unlock()
+	return v
 }
 
 // A FixedHistogram is implementation of Histogram with fixed-size buckets.
@@ -270,7 +273,7 @@ func NewFixedHistogram(startVal, endVal, width int64) *FixedHistogram {
 	// fmtStr := fmt.Sprintf("%%s%%0%dd", len(strconv.FormatUint(endVal+width, 10)))
 	for i := 0; i < len(weights); i++ {
 		if i == len(weights)-1 {
-			weights[i] = ge
+			weights[i] = math.MaxInt64
 			names[i] = "inf"
 			weightsAliases[i] = names[i]
 		} else {
@@ -337,7 +340,7 @@ func NewVHistogram(weights []int64, names []string) *VHistogram {
 	weightsAliases := make([]string, len(w))
 	copy(w, weights)
 	sort.Slice(w[:len(weights)-1], func(i, j int) bool { return w[i] < w[j] })
-	last := w[len(w)-2] + 1
+	// last := w[len(w)-2] + 1
 	ns := make([]string, len(w))
 
 	// fmtStr := fmt.Sprintf("%%s%%0%dd", len(strconv.FormatUint(last, 10)))
@@ -349,7 +352,7 @@ func NewVHistogram(weights []int64, names []string) *VHistogram {
 				ns[i] = names[i]
 			}
 			weightsAliases[i] = "inf"
-			w[i] = last
+			w[i] = math.MaxInt64
 		} else {
 			weightsAliases[i] = strconv.FormatInt(w[i], 10)
 			if i >= len(names) || names[i] == "" {
@@ -397,13 +400,6 @@ func (h *VHistogram) Snapshot() Histogram {
 		total:          h.NameTotal(),
 		buckets:        h.Values(),
 	}
-}
-
-func (h *VHistogram) Clear() {
-	buckets := make([]uint64, len(h.buckets))
-	h.lock.Lock()
-	h.buckets = buckets
-	h.lock.Unlock()
 }
 
 func (h *VHistogram) Add(v int64) {

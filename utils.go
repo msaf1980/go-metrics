@@ -20,9 +20,9 @@ func searchInt64Ge(a []int64, v int64) int {
 	}
 	start := 0
 	end := len(a) - 1
-	if end == 0 || v > a[end] {
-		return end
-	}
+	// if end == 0 || v > a[end] {
+	// 	return end
+	// }
 	for end > start {
 		mid := start + (end-start)/2
 		if v > a[mid] {
@@ -42,9 +42,9 @@ func searchUint64Ge(a []uint64, v uint64) int {
 	}
 	start := 0
 	end := len(a) - 1
-	if end == 0 || v > a[end] {
-		return end
-	}
+	// if end == 0 || v > a[end] {
+	// 	return end
+	// }
 	for end > start {
 		mid := start + (end-start)/2
 		if v > a[mid] {

@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"math"
 	"sort"
 	"strconv"
 	"sync"
@@ -15,12 +16,11 @@ type UHistogram interface {
 	AddLabelPrefix(string) UHistogram
 	SetNameTotal(string) UHistogram
 	Snapshot() UHistogram
-	Clear()
 	Add(v uint64)
 	Weights() []uint64
 }
 
-// GetOrRegisterHistoram returns an existing Histogram or constructs and registers
+// GetOrRegisterHistogram returns an existing Histogram or constructs and registers
 // a new FixedHistorgam.
 func GetOrRegisterUFixedHistogram(name string, r Registry, startVal, endVal, width uint64) UHistogram {
 	if nil == r {
@@ -31,7 +31,7 @@ func GetOrRegisterUFixedHistogram(name string, r Registry, startVal, endVal, wid
 	}).(UHistogram)
 }
 
-// GetOrRegisterHistoramT returns an existing Histogram or constructs and registers
+// GetOrRegisterHistogramT returns an existing Histogram or constructs and registers
 // a new FixedHistorgam.
 func GetOrRegisterUFixedHistogramT(name string, tagsMap map[string]string, r Registry, startVal, endVal, width uint64) UHistogram {
 	if nil == r {
@@ -149,7 +149,7 @@ func (h *UHistogramSnapshot) Add(v uint64) {
 	panic("Add called on a UHistogramSnapshot")
 }
 
-func (h *UHistogramSnapshot) Clear() {
+func (h *UHistogramSnapshot) Clear() []uint64 {
 	panic("Clear called on a UHistogramSnapshot")
 }
 
@@ -227,11 +227,13 @@ func (h *UHistogramStorage) Snapshot() UHistogram {
 	}
 }
 
-func (h *UHistogramStorage) Clear() {
+func (h *UHistogramStorage) Clear() []uint64 {
 	buckets := make([]uint64, len(h.buckets))
 	h.lock.Lock()
+	v := h.buckets
 	h.buckets = buckets
 	h.lock.Unlock()
+	return v
 }
 
 // A UFixedHistogram is implementation of UHistogram with fixed-size buckets.
@@ -258,7 +260,7 @@ func NewUFixedHistogram(startVal, endVal, width uint64) *UFixedHistogram {
 	// fmtStr := fmt.Sprintf("%%s%%0%dd", len(strconv.FormatUint(endVal+width, 10)))
 	for i := 0; i < len(weights); i++ {
 		if i == len(weights)-1 {
-			weights[i] = ge
+			weights[i] = math.MaxUint64
 			weightsAliases[i] = "inf"
 			names[i] = weightsAliases[i]
 		} else {
@@ -325,7 +327,7 @@ func NewUVHistogram(weights []uint64, names []string) *UVHistogram {
 	weightsAliases := make([]string, len(w))
 	copy(w, weights)
 	sort.Slice(w[:len(weights)-1], func(i, j int) bool { return w[i] < w[j] })
-	last := w[len(w)-2] + 1
+	// last := w[len(w)-2] + 1
 	ns := make([]string, len(w))
 
 	// fmtStr := fmt.Sprintf("%%s%%0%dd", len(strconv.FormatUint(last, 10)))
@@ -337,7 +339,7 @@ func NewUVHistogram(weights []uint64, names []string) *UVHistogram {
 			} else {
 				ns[i] = names[i]
 			}
-			w[i] = last
+			w[i] = math.MaxUint64
 		} else {
 			weightsAliases[i] = strconv.FormatUint(w[i], 10)
 			if i >= len(names) || names[i] == "" {
@@ -376,13 +378,6 @@ func (h *UVHistogram) Snapshot() UHistogram {
 		total:          h.NameTotal(),
 		buckets:        h.Values(),
 	}
-}
-
-func (h *UVHistogram) Clear() {
-	buckets := make([]uint64, len(h.buckets))
-	h.lock.Lock()
-	h.buckets = buckets
-	h.lock.Unlock()
 }
 
 func (h *UVHistogram) Add(v uint64) {

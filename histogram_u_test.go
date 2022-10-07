@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"math"
 	"reflect"
 	"strconv"
 	"testing"
@@ -21,7 +22,7 @@ func TestNewUFixedHistogram(t *testing.T) {
 			startVal:           100,
 			endVal:             1000,
 			width:              100,
-			wantWeights:        []uint64{100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100},
+			wantWeights:        []uint64{100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, math.MaxUint64},
 			wantWeightsAliases: []string{"100", "200", "300", "400", "500", "600", "700", "800", "900", "1000", "inf"},
 			// wantLabels:   []string{"0100", "0200", "0300", "0400", "0500", "0600", "0700", "0800", "0900", "1000", "inf"},
 			wantLabels: []string{"100", "200", "300", "400", "500", "600", "700", "800", "900", "1000", "inf"},
@@ -31,7 +32,7 @@ func TestNewUFixedHistogram(t *testing.T) {
 			endVal:             100,
 			width:              40,
 			labelPrefix:        "req_le_",
-			wantWeights:        []uint64{10, 50, 90, 130, 170},
+			wantWeights:        []uint64{10, 50, 90, 130, math.MaxUint64},
 			wantWeightsAliases: []string{"10", "50", "90", "130", "inf"},
 			// wantLabels:   []string{"req_le_010", "req_le_050", "req_le_090", "req_le_130", "req_le_inf"},
 			wantLabels: []string{"req_le_10", "req_le_50", "req_le_90", "req_le_130", "req_le_inf"},
@@ -192,7 +193,7 @@ func TestNewVFixedHistogram(t *testing.T) {
 	}{
 		{
 			weights:            []uint64{1, 2, 3, 4, 5, 6, 7, 8, 9, 20},
-			wantWeights:        []uint64{1, 2, 3, 4, 5, 6, 7, 8, 9, 20, 21},
+			wantWeights:        []uint64{1, 2, 3, 4, 5, 6, 7, 8, 9, 20, math.MaxUint64},
 			wantWeightsAliases: []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "20", "inf"},
 			// wantLabels:   []string{"01", "02", "03", "04", "05", "06", "07", "08", "09", "20", "inf"},
 			wantLabels: []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "20", "inf"},
@@ -200,7 +201,7 @@ func TestNewVFixedHistogram(t *testing.T) {
 		{
 			weights:            []uint64{10, 20, 100},
 			names:              []string{"green", "blue", "yellow", "red", "none"},
-			wantWeights:        []uint64{10, 20, 100, 101},
+			wantWeights:        []uint64{10, 20, 100, math.MaxUint64},
 			wantWeightsAliases: []string{"10", "20", "100", "inf"},
 			wantLabels:         []string{"green", "blue", "yellow", "red"},
 		},
@@ -209,7 +210,7 @@ func TestNewVFixedHistogram(t *testing.T) {
 			names:              []string{"green", "blue", "yellow"},
 			labelPrefix:        "req_",
 			total:              "total_req",
-			wantWeights:        []uint64{10, 20, 100, 101},
+			wantWeights:        []uint64{10, 20, 100, math.MaxUint64},
 			wantWeightsAliases: []string{"10", "20", "100", "inf"},
 			wantLabels:         []string{"req_green", "req_blue", "req_yellow", "req_inf"},
 		},
