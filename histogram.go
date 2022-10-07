@@ -15,6 +15,8 @@ type HistogramInterface interface {
 	NameTotal() string
 	// Tag aliases values (for le key)
 	WeightsAliases() []string
+	// If true, is prometheus-like (cummulative, increment in bucket[1]  also increment bucket[0])
+	IsSummed() bool
 }
 
 // A Histogram is a lossy data structure used to record the distribution of
@@ -166,6 +168,8 @@ func (h *HistogramSnapshot) Snapshot() Histogram {
 	return h
 }
 
+func (HistogramSnapshot) IsSummed() bool { return false }
+
 type HistogramStorage struct {
 	weights        []int64 // Sorted weights (greater or equal), last is inf
 	weightsAliases []string
@@ -244,6 +248,8 @@ func (h *HistogramStorage) Clear() []uint64 {
 	h.lock.Unlock()
 	return v
 }
+
+func (h *HistogramStorage) IsSummed() bool { return false }
 
 // A FixedHistogram is implementation of Histogram with fixed-size buckets.
 type FixedHistogram struct {

@@ -32,6 +32,10 @@ func TestWritesT(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	sh := metrics.GetOrRegisterFixedSumHistogramT("shistogram", map[string]string{"tag1": "value1", "tag21": "value21"}, r, 1, 3, 1).AddLabelPrefix("req_")
+	sh.Add(2)
+	sh.Add(6)
+
 	rate := metrics.GetOrRegisterRateT("ratefoo", map[string]string{"tag1": "value1", "tag21": "value21"}, r).SetName("_value").SetRateName("_rate")
 	rate.UpdateTs(1, 1e9)
 	rate.UpdateTs(7, 3e9)
@@ -86,6 +90,12 @@ func TestWritesT(t *testing.T) {
 		"footag.histogram;tag1=value1;tag21=value21;label=20;le=20":   {V: 0},
 		"footag.histogram;tag1=value1;tag21=value21;label=inf;le=inf": {V: 0},
 		"footag.histogram;tag1=value1;tag21=value21;label=total":      {V: 2},
+		// shistogram
+		"footag.shistogram;tag1=value1;tag21=value21;label=req_1;le=1":     {V: 2.0},
+		"footag.shistogram;tag1=value1;tag21=value21;label=req_2;le=2":     {V: 2.0},
+		"footag.shistogram;tag1=value1;tag21=value21;label=req_3;le=3":     {V: 1.0},
+		"footag.shistogram;tag1=value1;tag21=value21;label=req_inf;le=inf": {V: 1.0},
+		"footag.shistogram;tag1=value1;tag21=value21;label=total":          {V: 2.0},
 		// rate
 		"footag.ratefoo_value;tag1=value1;tag21=value21":  {V: 7},
 		"footag.ratefoo_rate;tag1=value1;tag21=value21":   {V: 3},

@@ -372,17 +372,28 @@ func (g *Graphite) send(r metrics.Registry) error {
 				return err
 			}
 		case metrics.HistogramInterface:
-			var total uint64
 			vals := metric.Values()
 			leAliases := metric.WeightsAliases()
-			for i, label := range metric.Labels() {
-				if err = g.writeHistogramMetric(name, label, leAliases[i], tags, vals[i], now); err != nil {
+			if metric.IsSummed() {
+				for i, label := range metric.Labels() {
+					if err = g.writeHistogramMetric(name, label, leAliases[i], tags, vals[i], now); err != nil {
+						return err
+					}
+				}
+				if err = g.writeHistogramMetric(name, metric.NameTotal(), "", tags, vals[0], now); err != nil {
 					return err
 				}
-				total += vals[i]
-			}
-			if err = g.writeHistogramMetric(name, metric.NameTotal(), "", tags, total, now); err != nil {
-				return err
+			} else {
+				var total uint64
+				for i, label := range metric.Labels() {
+					if err = g.writeHistogramMetric(name, label, leAliases[i], tags, vals[i], now); err != nil {
+						return err
+					}
+					total += vals[i]
+				}
+				if err = g.writeHistogramMetric(name, metric.NameTotal(), "", tags, total, now); err != nil {
+					return err
+				}
 			}
 		case metrics.Rate:
 			v, rate := metric.Values()

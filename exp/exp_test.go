@@ -33,6 +33,13 @@ func TestExp(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	sh := metrics.NewFixedSumHistogram(1, 3, 1).AddLabelPrefix("req_")
+	sh.Add(2)
+	h.Add(6)
+	if err := r.Register("shistogram", sh); err != nil {
+		t.Fatal(err)
+	}
+
 	ht := metrics.NewVHistogram([]int64{1, 2, 5, 8, 20}, nil).AddLabelPrefix("req_")
 	ht.Add(2)
 	ht.Add(6)
@@ -90,8 +97,8 @@ func TestExp(t *testing.T) {
 		"histogram.req_1":                 0,
 		"histogram.req_2":                 1,
 		"histogram.req_3":                 0,
-		"histogram.req_inf":               0,
-		"histogram.total":                 1,
+		"histogram.req_inf":               1,
+		"histogram.total":                 2,
 		"histogram;tag1=value1;tag21=value21;label=req_1;le=1":     0,
 		"histogram;tag1=value1;tag21=value21;label=req_2;le=2":     1,
 		"histogram;tag1=value1;tag21=value21;label=req_5;le=5":     0,
@@ -99,10 +106,15 @@ func TestExp(t *testing.T) {
 		"histogram;tag1=value1;tag21=value21;label=req_20;le=20":   0,
 		"histogram;tag1=value1;tag21=value21;label=req_inf;le=inf": 0,
 		"histogram;tag1=value1;tag21=value21;label=total":          2,
-		"ratefoo_value":  7,
-		"ratefoo_rate":   3,
-		"ratefoo2.value": 8,
-		"ratefoo2.rate":  3,
+		"shistogram.req_1":   1,
+		"shistogram.req_2":   1,
+		"shistogram.req_3":   0,
+		"shistogram.req_inf": 0,
+		"shistogram.total":   1,
+		"ratefoo_value":      7,
+		"ratefoo_rate":       3,
+		"ratefoo2.value":     8,
+		"ratefoo2.rate":      3,
 	}
 	if err = json.Unmarshal(body, &got); err == nil {
 		assert.Equal(t, want, got)

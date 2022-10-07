@@ -267,13 +267,21 @@ func (r *StandardRegistry) GetAll() map[string]map[string]interface{} {
 			metric.Check()
 			values["status"] = metric.IsUp()
 		case HistogramInterface:
-			var total uint64
-			vals := metric.Values()
-			for i, label := range metric.Labels() {
-				values[label] = vals[i]
-				total += vals[i]
+			if metric.IsSummed() {
+				var total uint64
+				vals := metric.Values()
+				for i, label := range metric.Labels() {
+					values[label] = vals[i]
+					total += vals[i]
+				}
+				values[metric.NameTotal()] = total
+			} else {
+				vals := metric.Values()
+				for i, label := range metric.Labels() {
+					values[label] = vals[i]
+				}
+				values[metric.NameTotal()] = vals[0]
 			}
-			values[metric.NameTotal()] = total
 		case Rate:
 			v, rate := metric.Values()
 			values["value"] = v

@@ -157,6 +157,8 @@ func (h *UHistogramSnapshot) Snapshot() UHistogram {
 	return h
 }
 
+func (h *UHistogramSnapshot) IsSummed() bool { return false }
+
 type UHistogramStorage struct {
 	weights        []uint64 // Sorted weights (greater or equal), last is inf
 	weightsAliases []string
@@ -216,6 +218,8 @@ func (h *UHistogramStorage) WeightsAliases() []string {
 func (h *UHistogramStorage) Interface() HistogramInterface {
 	return h
 }
+
+func (h *UHistogramStorage) IsSummed() bool { return false }
 
 func (h *UHistogramStorage) Snapshot() UHistogram {
 	return &UHistogramSnapshot{

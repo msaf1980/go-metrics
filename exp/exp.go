@@ -39,24 +39,42 @@ func (exp *exp) expHandler(w http.ResponseWriter, r *http.Request) {
 		case metrics.Healthcheck:
 			fmt.Fprintf(w, "\n  \"%s%s\": %d", name, tags, metric.Check())
 		case metrics.HistogramInterface:
-			var total uint64
 			vals := metric.Values()
 			leAliases := metric.WeightsAliases()
-			for i, label := range metric.Labels() {
-				if i > 0 {
-					fmt.Fprint(w, ",")
+			if metric.IsSummed() {
+				for i, label := range metric.Labels() {
+					if i > 0 {
+						fmt.Fprint(w, ",")
+					}
+					if tags == "" {
+						fmt.Fprintf(w, "\n  \"%s.%s%s\": %d", name, label, tags, vals[i])
+					} else {
+						fmt.Fprintf(w, "\n  \"%s%s\": %d", name, tags+";label="+label+";le="+leAliases[i], vals[i])
+					}
 				}
 				if tags == "" {
-					fmt.Fprintf(w, "\n  \"%s.%s%s\": %d", name, label, tags, vals[i])
+					fmt.Fprintf(w, ",\n  \"%s.%s%s\": %d", name, metric.NameTotal(), tags, vals[0])
 				} else {
-					fmt.Fprintf(w, "\n  \"%s%s\": %d", name, tags+";label="+label+";le="+leAliases[i], vals[i])
+					fmt.Fprintf(w, ",\n  \"%s%s\": %d", name, tags+";label="+metric.NameTotal(), vals[0])
 				}
-				total += vals[i]
-			}
-			if tags == "" {
-				fmt.Fprintf(w, ",\n  \"%s.%s%s\": %d", name, metric.NameTotal(), tags, total)
 			} else {
-				fmt.Fprintf(w, ",\n  \"%s%s\": %d", name, tags+";label="+metric.NameTotal(), total)
+				var total uint64
+				for i, label := range metric.Labels() {
+					if i > 0 {
+						fmt.Fprint(w, ",")
+					}
+					if tags == "" {
+						fmt.Fprintf(w, "\n  \"%s.%s%s\": %d", name, label, tags, vals[i])
+					} else {
+						fmt.Fprintf(w, "\n  \"%s%s\": %d", name, tags+";label="+label+";le="+leAliases[i], vals[i])
+					}
+					total += vals[i]
+				}
+				if tags == "" {
+					fmt.Fprintf(w, ",\n  \"%s.%s%s\": %d", name, metric.NameTotal(), tags, total)
+				} else {
+					fmt.Fprintf(w, ",\n  \"%s%s\": %d", name, tags+";label="+metric.NameTotal(), total)
+				}
 			}
 		case metrics.Rate:
 			v, rate := metric.Values()

@@ -170,6 +170,8 @@ func (h *FHistogramSnapshot) Snapshot() FHistogram {
 	return h
 }
 
+func (h *FHistogramSnapshot) IsSummed() bool { return false }
+
 type FHistogramStorage struct {
 	weights        []float64 // Sorted weights (greater or equal), last is inf
 	weightsAliases []string
@@ -248,6 +250,8 @@ func (h *FHistogramStorage) Clear() []uint64 {
 	h.lock.Unlock()
 	return v
 }
+
+func (h *FHistogramStorage) IsSummed() bool { return false }
 
 // A FFixedHistogram is implementation of FHistogram with fixed-size buckets.
 type FFixedHistogram struct {

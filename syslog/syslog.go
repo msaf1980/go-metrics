@@ -28,13 +28,20 @@ func Syslog(r metrics.Registry, d time.Duration, w *syslog.Writer, minLock bool)
 			case metrics.Healthcheck:
 				w.Info(fmt.Sprintf("healthcheck %s%s up: %d", name, tags, metric.Check()))
 			case metrics.HistogramInterface:
-				var total uint64
 				vals := metric.Values()
-				for i, label := range metric.Labels() {
-					w.Info(fmt.Sprintf("histogram %s%s %s value: %d", name, tags, label, vals[i]))
-					total += vals[i]
+				if metric.IsSummed() {
+					for i, label := range metric.Labels() {
+						w.Info(fmt.Sprintf("histogram %s%s %s value: %d", name, tags, label, vals[i]))
+					}
+					w.Info(fmt.Sprintf("histogram %s%s %s total: %d", name, tags, metric.NameTotal(), vals[0]))
+				} else {
+					var total uint64
+					for i, label := range metric.Labels() {
+						w.Info(fmt.Sprintf("histogram %s%s %s value: %d", name, tags, label, vals[i]))
+						total += vals[i]
+					}
+					w.Info(fmt.Sprintf("histogram %s%s %s total: %d", name, tags, metric.NameTotal(), total))
 				}
-				w.Info(fmt.Sprintf("histogram %s%s %s total: %d", name, tags, metric.NameTotal(), total))
 			case metrics.Rate:
 				v, rate := metric.Values()
 				w.Info(fmt.Sprintf("rate %s%s%s value: %d rate: %f\n", name, metric.Name(), tags, v, rate))

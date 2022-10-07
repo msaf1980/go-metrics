@@ -54,13 +54,20 @@ func LogScaledOnCue(r metrics.Registry, ch chan interface{}, scale time.Duration
 			case metrics.Healthcheck:
 				l.Printf("healthcheck %s%s up: %d\n", name, tags, metric.Check())
 			case metrics.HistogramInterface:
-				var total uint64
 				vals := metric.Values()
-				for i, label := range metric.Labels() {
-					l.Printf("histogram %s%s %s value: %9d\n", name, tags, label, vals[i])
-					total += vals[i]
+				if metric.IsSummed() {
+					for i, label := range metric.Labels() {
+						l.Printf("histogram %s%s %s value: %9d\n", name, tags, label, vals[i])
+					}
+					l.Printf("histogram %s%s %s: %9d\n", name, tags, metric.NameTotal(), vals[0])
+				} else {
+					var total uint64
+					for i, label := range metric.Labels() {
+						l.Printf("histogram %s%s %s value: %9d\n", name, tags, label, vals[i])
+						total += vals[i]
+					}
+					l.Printf("histogram %s%s %s: %9d\n", name, tags, metric.NameTotal(), total)
 				}
-				l.Printf("histogram %s%s %s: %9d\n", name, tags, metric.NameTotal(), total)
 			case metrics.Rate:
 				v, rate := metric.Values()
 				l.Printf("rate %s%s%s value: %f rate: %f\n", name, metric.Name(), tags, v, rate)

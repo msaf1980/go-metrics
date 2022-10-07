@@ -101,6 +101,13 @@ func TestWrites(t *testing.T) {
 	h.Add(2)
 	h.Add(6)
 
+	sh := metrics.NewFixedSumHistogram(1, 3, 1).AddLabelPrefix("req_")
+	sh.Add(2)
+	sh.Add(6)
+	if err := r.Register("shistogram", sh); err != nil {
+		t.Fatal(err)
+	}
+
 	rate := metrics.GetOrRegisterRate("ratefoo", r).SetName("_value").SetRateName("_rate")
 	rate.UpdateTs(1, 1e9)
 	rate.UpdateTs(7, 3e9)
@@ -146,6 +153,12 @@ func TestWrites(t *testing.T) {
 		"foobar.histogram.8":     {V: 1},
 		"foobar.histogram.inf":   {V: 0},
 		"foobar.histogram.total": {V: 2},
+		// shistogram
+		"foobar.shistogram.req_1":   {V: 2},
+		"foobar.shistogram.req_2":   {V: 2},
+		"foobar.shistogram.req_3":   {V: 1},
+		"foobar.shistogram.req_inf": {V: 1},
+		"foobar.shistogram.total":   {V: 2},
 		// rate
 		"foobar.ratefoo_value":  {V: 7},
 		"foobar.ratefoo_rate":   {V: 3},
