@@ -244,7 +244,6 @@ func (g *Graphite) writeHistogramMetric(name, label, le string, tags string, v u
 			g.buf.WriteRune('.')
 		}
 		g.buf.WriteString(name)
-		g.buf.WriteRune('.')
 		g.buf.WriteString(label)
 	} else {
 		if g.c.TagPrefix != "" {
@@ -252,11 +251,8 @@ func (g *Graphite) writeHistogramMetric(name, label, le string, tags string, v u
 			g.buf.WriteRune('.')
 		}
 		g.buf.WriteString(name)
+		g.buf.WriteString(label)
 		g.buf.WriteString(tags)
-		if label != "" {
-			g.buf.WriteString(";label=")
-			g.buf.WriteString(label)
-		}
 		if le != "" {
 			g.buf.WriteString(";le=")
 			g.buf.WriteString(le)

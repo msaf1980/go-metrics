@@ -6,6 +6,10 @@ import (
 )
 
 // GaugeFloat64s hold a float64 value that can be set arbitrarily.
+//
+// Plain: {PREFIX}.{NAME}
+//
+// Tagged: {TAG_PREFIX}.{NAME}
 type GaugeFloat64 interface {
 	Snapshot() GaugeFloat64
 	Update(float64)

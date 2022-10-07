@@ -196,7 +196,11 @@ func (h *FHistogramStorage) SetLabels(labels []string) {
 func (h *FHistogramStorage) AddLabelPrefix(labelPrefix string) {
 	h.lock.Lock()
 	for i := range h.labels {
-		h.labels[i] = labelPrefix + h.labels[i]
+		if strings.HasPrefix(h.labels[i], ".") {
+			h.labels[i] = "." + labelPrefix + h.labels[i][1:]
+		} else {
+			h.labels[i] = labelPrefix + h.labels[i]
+		}
 	}
 	h.lock.Unlock()
 }
@@ -272,7 +276,7 @@ func NewFFixedHistogram(startVal, endVal, width float64) FHistogram {
 	count := int(n) + 2
 	weights := make([]float64, count)
 	weightsAliases := make([]string, count)
-	names := make([]string, count)
+	labels := make([]string, count)
 	buckets := make([]uint64, count)
 	ge := startVal
 
@@ -282,13 +286,13 @@ func NewFFixedHistogram(startVal, endVal, width float64) FHistogram {
 		if i == len(weights)-1 {
 			weights[i] = math.MaxFloat64
 			weightsAliases[i] = "inf"
-			names[i] = weightsAliases[i]
+			labels[i] = ".inf"
 		} else {
 			weights[i] = ge
 			// n := int(ge)
 			// d := ge - float64(n)
 			weightsAliases[i] = strings.ReplaceAll(trimFloatZero(strconv.FormatFloat(ge, 'f', 2, 64)), ".", "_")
-			names[i] = weightsAliases[i]
+			labels[i] = "." + weightsAliases[i]
 			// names[i] = fmt.Sprintf(fmtStr, prefix, n)
 			ge += width
 		}
@@ -298,8 +302,8 @@ func NewFFixedHistogram(startVal, endVal, width float64) FHistogram {
 		FHistogramStorage: FHistogramStorage{
 			weights:        weights,
 			weightsAliases: weightsAliases,
-			labels:         names,
-			total:          "total",
+			labels:         labels,
+			total:          ".total",
 			buckets:        buckets,
 		},
 		start: startVal,
@@ -353,25 +357,25 @@ func NewFVHistogram(weights []float64, names []string) *FVHistogram {
 	copy(w, weights)
 	sort.Slice(w[:len(weights)-1], func(i, j int) bool { return w[i] < w[j] })
 	// last := w[len(w)-2] + 1
-	ns := make([]string, len(w))
+	lbls := make([]string, len(w))
 
 	// fmtStr := fmt.Sprintf("%%s%%0%df", len(strconv.FormatFloat(last, 'f', -1, 64)))
 	for i := 0; i < len(w); i++ {
 		if i == len(w)-1 {
 			weightsAliases[i] = "inf"
 			if i >= len(names) || names[i] == "" {
-				ns[i] = weightsAliases[i]
+				lbls[i] = ".inf"
 			} else {
-				ns[i] = names[i]
+				lbls[i] = names[i]
 			}
 			w[i] = math.MaxFloat64
 		} else {
 			weightsAliases[i] = strings.ReplaceAll(trimFloatZero(strconv.FormatFloat(w[i], 'f', 2, 64)), ".", "_")
 			if i >= len(names) || names[i] == "" {
 				// ns[i] = fmt.Sprintf(fmtStr, prefix, w[i])
-				ns[i] = weightsAliases[i]
+				lbls[i] = "." + weightsAliases[i]
 			} else {
-				ns[i] = names[i]
+				lbls[i] = names[i]
 			}
 		}
 	}
@@ -380,8 +384,8 @@ func NewFVHistogram(weights []float64, names []string) *FVHistogram {
 		FHistogramStorage: FHistogramStorage{
 			weights:        w,
 			weightsAliases: weightsAliases,
-			labels:         ns,
-			total:          "total",
+			labels:         lbls,
+			total:          ".total",
 			buckets:        make([]uint64, len(w)),
 		},
 	}

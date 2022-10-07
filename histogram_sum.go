@@ -165,19 +165,19 @@ func NewFixedSumHistogram(startVal, endVal, width int64) *FixedSumHistogram {
 	}
 	weights := make([]int64, count)
 	weightsAliases := make([]string, count)
-	names := make([]string, count)
+	labels := make([]string, count)
 	buckets := make([]uint64, count)
 	ge := startVal
 	// fmtStr := fmt.Sprintf("%%s%%0%dd", len(strconv.FormatUint(endVal+width, 10)))
 	for i := 0; i < len(weights); i++ {
 		if i == len(weights)-1 {
 			weights[i] = ge
-			names[i] = "inf"
-			weightsAliases[i] = names[i]
+			weightsAliases[i] = "inf"
+			labels[i] = ".inf"
 		} else {
 			weights[i] = ge
-			names[i] = strconv.FormatInt(ge, 10)
-			weightsAliases[i] = names[i]
+			weightsAliases[i] = strconv.FormatInt(ge, 10)
+			labels[i] = "." + weightsAliases[i]
 			// names[i] = fmt.Sprintf(fmtStr, prefix, ge)
 			ge += width
 		}
@@ -187,8 +187,8 @@ func NewFixedSumHistogram(startVal, endVal, width int64) *FixedSumHistogram {
 		HistogramStorage: HistogramStorage{
 			weights:        weights,
 			weightsAliases: weightsAliases,
-			labels:         names,
-			total:          "total",
+			labels:         labels,
+			total:          ".total",
 			buckets:        buckets,
 		},
 		start: startVal,
@@ -243,15 +243,15 @@ func NewVSumHistogram(weights []int64, names []string) *VSumHistogram {
 	copy(w, weights)
 	sort.Slice(w[:len(weights)-1], func(i, j int) bool { return w[i] < w[j] })
 	last := w[len(w)-2] + 1
-	ns := make([]string, len(w))
+	lbls := make([]string, len(w))
 
 	// fmtStr := fmt.Sprintf("%%s%%0%dd", len(strconv.FormatUint(last, 10)))
 	for i := 0; i < len(w); i++ {
 		if i == len(w)-1 {
 			if i >= len(names) || names[i] == "" {
-				ns[i] = "inf"
+				lbls[i] = ".inf"
 			} else {
-				ns[i] = names[i]
+				lbls[i] = names[i]
 			}
 			weightsAliases[i] = "inf"
 			w[i] = last
@@ -259,9 +259,9 @@ func NewVSumHistogram(weights []int64, names []string) *VSumHistogram {
 			weightsAliases[i] = strconv.FormatInt(w[i], 10)
 			if i >= len(names) || names[i] == "" {
 				// ns[i] = fmt.Sprintf(fmtStr, prefix, w[i])
-				ns[i] = weightsAliases[i]
+				lbls[i] = "." + weightsAliases[i]
 			} else {
-				ns[i] = names[i]
+				lbls[i] = names[i]
 			}
 		}
 	}
@@ -270,8 +270,8 @@ func NewVSumHistogram(weights []int64, names []string) *VSumHistogram {
 		HistogramStorage: HistogramStorage{
 			weights:        w,
 			weightsAliases: weightsAliases,
-			labels:         ns,
-			total:          "total",
+			labels:         lbls,
+			total:          ".total",
 			buckets:        make([]uint64, len(w)),
 		},
 	}

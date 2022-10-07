@@ -4,6 +4,7 @@ import (
 	"math"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -183,7 +184,11 @@ func (h *UHistogramStorage) SetLabels(labels []string) {
 func (h *UHistogramStorage) AddLabelPrefix(labelPrefix string) {
 	h.lock.Lock()
 	for i := range h.labels {
-		h.labels[i] = labelPrefix + h.labels[i]
+		if strings.HasPrefix(h.labels[i], ".") {
+			h.labels[i] = "." + labelPrefix + h.labels[i][1:]
+		} else {
+			h.labels[i] = labelPrefix + h.labels[i]
+		}
 	}
 	h.lock.Unlock()
 }
@@ -258,7 +263,7 @@ func NewUFixedHistogram(startVal, endVal, width uint64) *UFixedHistogram {
 	}
 	weights := make([]uint64, count)
 	weightsAliases := make([]string, count)
-	names := make([]string, count)
+	labels := make([]string, count)
 	buckets := make([]uint64, count)
 	ge := startVal
 	// fmtStr := fmt.Sprintf("%%s%%0%dd", len(strconv.FormatUint(endVal+width, 10)))
@@ -266,11 +271,11 @@ func NewUFixedHistogram(startVal, endVal, width uint64) *UFixedHistogram {
 		if i == len(weights)-1 {
 			weights[i] = math.MaxUint64
 			weightsAliases[i] = "inf"
-			names[i] = weightsAliases[i]
+			labels[i] = ".inf"
 		} else {
 			weights[i] = ge
 			weightsAliases[i] = strconv.FormatUint(ge, 10)
-			names[i] = weightsAliases[i]
+			labels[i] = "." + weightsAliases[i]
 			// names[i] = fmt.Sprintf(fmtStr, prefix, ge)
 			ge += width
 		}
@@ -280,8 +285,8 @@ func NewUFixedHistogram(startVal, endVal, width uint64) *UFixedHistogram {
 		UHistogramStorage: UHistogramStorage{
 			weights:        weights,
 			weightsAliases: weightsAliases,
-			labels:         names,
-			total:          "total",
+			labels:         labels,
+			total:          ".total",
 			buckets:        buckets,
 		},
 		start: startVal,
@@ -326,31 +331,31 @@ type UVHistogram struct {
 	UHistogramStorage
 }
 
-func NewUVHistogram(weights []uint64, names []string) *UVHistogram {
+func NewUVHistogram(weights []uint64, labels []string) *UVHistogram {
 	w := make([]uint64, len(weights)+1)
 	weightsAliases := make([]string, len(w))
 	copy(w, weights)
 	sort.Slice(w[:len(weights)-1], func(i, j int) bool { return w[i] < w[j] })
 	// last := w[len(w)-2] + 1
-	ns := make([]string, len(w))
+	lbls := make([]string, len(w))
 
 	// fmtStr := fmt.Sprintf("%%s%%0%dd", len(strconv.FormatUint(last, 10)))
 	for i := 0; i < len(w); i++ {
 		if i == len(w)-1 {
 			weightsAliases[i] = "inf"
-			if i >= len(names) || names[i] == "" {
-				ns[i] = weightsAliases[i]
+			if i >= len(labels) || labels[i] == "" {
+				lbls[i] = ".inf"
 			} else {
-				ns[i] = names[i]
+				lbls[i] = labels[i]
 			}
 			w[i] = math.MaxUint64
 		} else {
 			weightsAliases[i] = strconv.FormatUint(w[i], 10)
-			if i >= len(names) || names[i] == "" {
+			if i >= len(labels) || labels[i] == "" {
 				// ns[i] = fmt.Sprintf(fmtStr, prefix, w[i])
-				ns[i] = weightsAliases[i]
+				lbls[i] = "." + weightsAliases[i]
 			} else {
-				ns[i] = names[i]
+				lbls[i] = labels[i]
 			}
 		}
 	}
@@ -359,8 +364,8 @@ func NewUVHistogram(weights []uint64, names []string) *UVHistogram {
 		UHistogramStorage: UHistogramStorage{
 			weights:        w,
 			weightsAliases: weightsAliases,
-			labels:         ns,
-			total:          "total",
+			labels:         lbls,
+			total:          ".total",
 			buckets:        make([]uint64, len(w)),
 		},
 	}

@@ -3,6 +3,12 @@ package metrics
 import "sync/atomic"
 
 // Gauges hold an int64 value that can be set arbitrarily.
+//
+//	Graphite naming scheme
+//
+// Plain: {PREFIX}.{NAME}
+//
+// Tagged: {TAG_PREFIX}.{NAME}
 type Gauge interface {
 	Snapshot() Gauge
 	Clear() int64

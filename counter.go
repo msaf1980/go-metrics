@@ -3,6 +3,12 @@ package metrics
 import "sync/atomic"
 
 // Counters hold an uint64 value that can be incremented only
+//
+//	Graphite naming scheme
+//
+// Plain: {PREFIX}.{NAME}
+//
+// Tagged: {TAG_PREFIX}.{NAME}
 type Counter interface {
 	Clear() uint64
 	Count() uint64

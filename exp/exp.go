@@ -47,15 +47,15 @@ func (exp *exp) expHandler(w http.ResponseWriter, r *http.Request) {
 						fmt.Fprint(w, ",")
 					}
 					if tags == "" {
-						fmt.Fprintf(w, "\n  \"%s.%s%s\": %d", name, label, tags, vals[i])
+						fmt.Fprintf(w, "\n  \"%s%s%s\": %d", name, label, tags, vals[i])
 					} else {
-						fmt.Fprintf(w, "\n  \"%s%s\": %d", name, tags+";label="+label+";le="+leAliases[i], vals[i])
+						fmt.Fprintf(w, "\n  \"%s%s%s\": %d", name, label, tags+";le="+leAliases[i], vals[i])
 					}
 				}
 				if tags == "" {
-					fmt.Fprintf(w, ",\n  \"%s.%s%s\": %d", name, metric.NameTotal(), tags, vals[0])
+					fmt.Fprintf(w, ",\n  \"%s%s%s\": %d", name, metric.NameTotal(), tags, vals[0])
 				} else {
-					fmt.Fprintf(w, ",\n  \"%s%s\": %d", name, tags+";label="+metric.NameTotal(), vals[0])
+					fmt.Fprintf(w, ",\n  \"%s%s%s\": %d", name, metric.NameTotal(), tags, vals[0])
 				}
 			} else {
 				var total uint64
@@ -64,16 +64,16 @@ func (exp *exp) expHandler(w http.ResponseWriter, r *http.Request) {
 						fmt.Fprint(w, ",")
 					}
 					if tags == "" {
-						fmt.Fprintf(w, "\n  \"%s.%s%s\": %d", name, label, tags, vals[i])
+						fmt.Fprintf(w, "\n  \"%s%s%s\": %d", name, label, tags, vals[i])
 					} else {
-						fmt.Fprintf(w, "\n  \"%s%s\": %d", name, tags+";label="+label+";le="+leAliases[i], vals[i])
+						fmt.Fprintf(w, "\n  \"%s%s%s\": %d", name, label, tags+";le="+leAliases[i], vals[i])
 					}
 					total += vals[i]
 				}
 				if tags == "" {
-					fmt.Fprintf(w, ",\n  \"%s.%s%s\": %d", name, metric.NameTotal(), tags, total)
+					fmt.Fprintf(w, ",\n  \"%s%s%s\": %d", name, metric.NameTotal(), tags, total)
 				} else {
-					fmt.Fprintf(w, ",\n  \"%s%s\": %d", name, tags+";label="+metric.NameTotal(), total)
+					fmt.Fprintf(w, ",\n  \"%s%s%s\": %d", name, metric.NameTotal(), tags, total)
 				}
 			}
 		case metrics.Rate:

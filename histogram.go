@@ -4,10 +4,33 @@ import (
 	"math"
 	"sort"
 	"strconv"
+	"strings"
 	"sync"
 )
 
 // A HistogramInterface is some strped (no Weights{}, it's not need in registry Each iterator) version of Histogram interface
+//
+//	Graphite naming scheme
+//
+// Plain:
+//
+// {PREFIX}.{NAME}{LABEL_BUCKET1}
+//
+// {PREFIX}.{NAME}{LABEL_BUCKET2}
+//
+// {PREFIX}.{NAME}{LABEL_BUCKET_INF}
+//
+// {PREFIX}.{NAME}{TOTAL}
+//
+// Tagged:
+//
+// {TAG_PREFIX}.{NAME}{LABEL_BUCKET1};TAG=VAL;..;le=W1
+//
+// {TAG_PREFIX}.{NAME}{LABEL_BUCKET2};TAG=VAL;..;le=W2
+//
+// {TAG_PREFIX}.{NAME}{LABEL_BUCKET_INF};TAG=VAL;..;le=inf
+//
+// {TAG_PREFIX}{NAME}{TOTAL};TAG=VAL;..
 type HistogramInterface interface {
 	Clear() []uint64
 	Values() []uint64
@@ -194,7 +217,11 @@ func (h *HistogramStorage) SetLabels(labels []string) {
 func (h *HistogramStorage) AddLabelPrefix(labelPrefix string) {
 	h.lock.Lock()
 	for i := range h.labels {
-		h.labels[i] = labelPrefix + h.labels[i]
+		if strings.HasPrefix(h.labels[i], ".") {
+			h.labels[i] = "." + labelPrefix + h.labels[i][1:]
+		} else {
+			h.labels[i] = labelPrefix + h.labels[i]
+		}
 	}
 	h.lock.Unlock()
 }
@@ -273,19 +300,19 @@ func NewFixedHistogram(startVal, endVal, width int64) *FixedHistogram {
 	}
 	weights := make([]int64, count)
 	weightsAliases := make([]string, count)
-	names := make([]string, count)
+	labels := make([]string, count)
 	buckets := make([]uint64, count)
 	ge := startVal
 	// fmtStr := fmt.Sprintf("%%s%%0%dd", len(strconv.FormatUint(endVal+width, 10)))
 	for i := 0; i < len(weights); i++ {
 		if i == len(weights)-1 {
 			weights[i] = math.MaxInt64
-			names[i] = "inf"
-			weightsAliases[i] = names[i]
+			weightsAliases[i] = "inf"
+			labels[i] = ".inf"
 		} else {
 			weights[i] = ge
-			names[i] = strconv.FormatInt(ge, 10)
-			weightsAliases[i] = names[i]
+			weightsAliases[i] = strconv.FormatInt(ge, 10)
+			labels[i] = "." + weightsAliases[i]
 			// names[i] = fmt.Sprintf(fmtStr, prefix, ge)
 			ge += width
 		}
@@ -295,8 +322,8 @@ func NewFixedHistogram(startVal, endVal, width int64) *FixedHistogram {
 		HistogramStorage: HistogramStorage{
 			weights:        weights,
 			weightsAliases: weightsAliases,
-			labels:         names,
-			total:          "total",
+			labels:         labels,
+			total:          ".total",
 			buckets:        buckets,
 		},
 		start: startVal,
@@ -341,31 +368,31 @@ type VHistogram struct {
 	HistogramStorage
 }
 
-func NewVHistogram(weights []int64, names []string) *VHistogram {
+func NewVHistogram(weights []int64, labels []string) *VHistogram {
 	w := make([]int64, len(weights)+1)
 	weightsAliases := make([]string, len(w))
 	copy(w, weights)
 	sort.Slice(w[:len(weights)-1], func(i, j int) bool { return w[i] < w[j] })
 	// last := w[len(w)-2] + 1
-	ns := make([]string, len(w))
+	lbls := make([]string, len(w))
 
 	// fmtStr := fmt.Sprintf("%%s%%0%dd", len(strconv.FormatUint(last, 10)))
 	for i := 0; i < len(w); i++ {
 		if i == len(w)-1 {
-			if i >= len(names) || names[i] == "" {
-				ns[i] = "inf"
+			if i >= len(labels) || labels[i] == "" {
+				lbls[i] = ".inf"
 			} else {
-				ns[i] = names[i]
+				lbls[i] = labels[i]
 			}
 			weightsAliases[i] = "inf"
 			w[i] = math.MaxInt64
 		} else {
 			weightsAliases[i] = strconv.FormatInt(w[i], 10)
-			if i >= len(names) || names[i] == "" {
+			if i >= len(labels) || labels[i] == "" {
 				// ns[i] = fmt.Sprintf(fmtStr, prefix, w[i])
-				ns[i] = weightsAliases[i]
+				lbls[i] = "." + weightsAliases[i]
 			} else {
-				ns[i] = names[i]
+				lbls[i] = labels[i]
 			}
 		}
 	}
@@ -374,8 +401,8 @@ func NewVHistogram(weights []int64, names []string) *VHistogram {
 		HistogramStorage: HistogramStorage{
 			weights:        w,
 			weightsAliases: weightsAliases,
-			labels:         ns,
-			total:          "total",
+			labels:         lbls,
+			total:          ".total",
 			buckets:        make([]uint64, len(w)),
 		},
 	}

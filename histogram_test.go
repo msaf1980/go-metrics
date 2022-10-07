@@ -25,7 +25,7 @@ func TestNewFixedHistogram(t *testing.T) {
 			wantWeights:        []int64{100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, math.MaxInt64},
 			wantWeightsAliases: []string{"100", "200", "300", "400", "500", "600", "700", "800", "900", "1000", "inf"},
 			// wantLabels:   []string{"0100", "0200", "0300", "0400", "0500", "0600", "0700", "0800", "0900", "1000", "inf"},
-			wantLabels: []string{"100", "200", "300", "400", "500", "600", "700", "800", "900", "1000", "inf"},
+			wantLabels: []string{".100", ".200", ".300", ".400", ".500", ".600", ".700", ".800", ".900", ".1000", ".inf"},
 		},
 		{
 			startVal:           10,
@@ -35,7 +35,7 @@ func TestNewFixedHistogram(t *testing.T) {
 			wantWeights:        []int64{10, 50, 90, 130, math.MaxInt64},
 			wantWeightsAliases: []string{"10", "50", "90", "130", "inf"},
 			// wantLabels:   []string{"req_le_010", "req_le_050", "req_le_090", "req_le_130", "req_le_inf"},
-			wantLabels: []string{"req_le_10", "req_le_50", "req_le_90", "req_le_130", "req_le_inf"},
+			wantLabels: []string{".req_le_10", ".req_le_50", ".req_le_90", ".req_le_130", ".req_le_inf"},
 		},
 	}
 	for i, tt := range tests {
@@ -57,7 +57,7 @@ func TestNewFixedHistogram(t *testing.T) {
 				t.Errorf("NewFixedHistogram() names =\n%q\nwant\n%q", got.Labels(), tt.wantLabels)
 			}
 			if tt.total == "" {
-				tt.total = "total"
+				tt.total = ".total"
 			}
 			if got.NameTotal() != tt.total {
 				t.Errorf("NewFixedHistogram() total = %q, want %q", got.NameTotal(), tt.total)
@@ -118,9 +118,9 @@ func TestFixedHistogram_SetNames(t *testing.T) {
 	endVal := int64(50)
 	h := NewFixedHistogram(startVal, endVal, width)
 
-	wantLabels := []string{"10", "20", "30", "40", "50", "inf"}
+	wantLabels := []string{".10", ".20", ".30", ".40", ".50", ".inf"}
 	weightsAliases := []string{"10", "20", "30", "40", "50", "inf"}
-	wantNameTotal := "total"
+	wantNameTotal := ".total"
 	if !reflect.DeepEqual(h.Labels(), wantLabels) {
 		t.Errorf("h.Snapshot().Labels() = %q, want %q", h.Labels(), wantLabels)
 	}
@@ -131,7 +131,7 @@ func TestFixedHistogram_SetNames(t *testing.T) {
 		t.Errorf("NewFixedHistogram() weightsAliases =\n%q\nwant\n%q", h.WeightsAliases(), weightsAliases)
 	}
 
-	wantLabels = []string{"le_10", "le_20", "le_30", "le_40", "le_50", "le_inf"}
+	wantLabels = []string{".le_10", ".le_20", ".le_30", ".le_40", ".le_50", ".le_inf"}
 	wantNameTotal = "req_total"
 	h.AddLabelPrefix("le_")
 	h.SetNameTotal(wantNameTotal)
@@ -145,7 +145,7 @@ func TestFixedHistogram_SetNames(t *testing.T) {
 		t.Errorf("NewFixedHistogram() weightsAliases =\n%q\nwant\n%q", h.WeightsAliases(), weightsAliases)
 	}
 
-	wantLabels = []string{"green", "yellow", "le_30", "le_40", "le_50", "le_inf"}
+	wantLabels = []string{"green", "yellow", ".le_30", ".le_40", ".le_50", ".le_inf"}
 	h.SetLabels([]string{"green", "yellow"})
 	h.SetNameTotal(wantNameTotal)
 	if !reflect.DeepEqual(h.Labels(), wantLabels) {
@@ -189,7 +189,7 @@ func TestFixedHistogram_Snapshot(t *testing.T) {
 func TestNewVHistogram(t *testing.T) {
 	tests := []struct {
 		weights            []int64
-		names              []string
+		labels             []string
 		labelPrefix        string
 		total              string
 		wantWeights        []int64
@@ -201,28 +201,28 @@ func TestNewVHistogram(t *testing.T) {
 			wantWeights:        []int64{1, 2, 3, 4, 5, 6, 7, 8, 9, 20, math.MaxInt64},
 			wantWeightsAliases: []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "20", "inf"},
 			// wantLabels:   []string{"01", "02", "03", "04", "05", "06", "07", "08", "09", "20", "inf"},
-			wantLabels: []string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "20", "inf"},
+			wantLabels: []string{".1", ".2", ".3", ".4", ".5", ".6", ".7", ".8", ".9", ".20", ".inf"},
 		},
 		{
 			weights:            []int64{10, 20, 100},
-			names:              []string{"green", "blue", "yellow", "red", "none"},
+			labels:             []string{"green", "blue", "yellow", "red", "none"},
 			wantWeights:        []int64{10, 20, 100, math.MaxInt64},
 			wantWeightsAliases: []string{"10", "20", "100", "inf"},
 			wantLabels:         []string{"green", "blue", "yellow", "red"},
 		},
 		{
 			weights:            []int64{10, 20, 100},
-			names:              []string{"green", "blue", "yellow"},
+			labels:             []string{"green", "blue", "yellow"},
 			labelPrefix:        "req_",
 			total:              "total_req",
 			wantWeights:        []int64{10, 20, 100, math.MaxInt64},
 			wantWeightsAliases: []string{"10", "20", "100", "inf"},
-			wantLabels:         []string{"req_green", "req_blue", "req_yellow", "req_inf"},
+			wantLabels:         []string{"req_green", "req_blue", "req_yellow", ".req_inf"},
 		},
 	}
 	for i, tt := range tests {
 		t.Run("#"+strconv.Itoa(i), func(t *testing.T) {
-			got := NewVHistogram(tt.weights, tt.names)
+			got := NewVHistogram(tt.weights, tt.labels)
 			if tt.labelPrefix != "" {
 				got.AddLabelPrefix(tt.labelPrefix)
 			}
@@ -239,7 +239,7 @@ func TestNewVHistogram(t *testing.T) {
 				t.Errorf("NewVHistogram() names =\n%q\nwant\n%q", got.labels, tt.wantLabels)
 			}
 			if tt.total == "" {
-				tt.total = "total"
+				tt.total = ".total"
 			}
 			if got.NameTotal() != tt.total {
 				t.Errorf("NewVHistogram() total = %q, want %q", got.NameTotal(), tt.total)
@@ -292,9 +292,9 @@ func TestVHistogram_Add(t *testing.T) {
 func TestVHistogram_SetNames(t *testing.T) {
 	h := NewVHistogram([]int64{10, 20, 50, 80, 100}, nil)
 
-	wantLabels := []string{"10", "20", "50", "80", "100", "inf"}
+	wantLabels := []string{".10", ".20", ".50", ".80", ".100", ".inf"}
 	weightsAliases := []string{"10", "20", "50", "80", "100", "inf"}
-	wantNameTotal := "total"
+	wantNameTotal := ".total"
 	if !reflect.DeepEqual(h.Labels(), wantLabels) {
 		t.Errorf("h.Snapshot().Labels() = %q, want %q", h.Labels(), wantLabels)
 	}
@@ -305,7 +305,7 @@ func TestVHistogram_SetNames(t *testing.T) {
 		t.Errorf("NewFixedHistogram() weightsAliases =\n%q\nwant\n%q", h.WeightsAliases(), weightsAliases)
 	}
 
-	wantLabels = []string{"le_10", "le_20", "le_50", "le_80", "le_100", "le_inf"}
+	wantLabels = []string{".le_10", ".le_20", ".le_50", ".le_80", ".le_100", ".le_inf"}
 	wantNameTotal = "req_total"
 	h.AddLabelPrefix("le_")
 	h.SetNameTotal(wantNameTotal)
@@ -319,7 +319,7 @@ func TestVHistogram_SetNames(t *testing.T) {
 		t.Errorf("NewFixedHistogram() weightsAliases =\n%q\nwant\n%q", h.WeightsAliases(), weightsAliases)
 	}
 
-	wantLabels = []string{"green", "yellow", "le_50", "le_80", "le_100", "le_inf"}
+	wantLabels = []string{"green", "yellow", ".le_50", ".le_80", ".le_100", ".le_inf"}
 	h.SetLabels([]string{"green", "yellow"})
 	h.SetNameTotal(wantNameTotal)
 	if !reflect.DeepEqual(h.Labels(), wantLabels) {
