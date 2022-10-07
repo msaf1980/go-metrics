@@ -263,6 +263,40 @@ func TestRegistryDuplicate(t *testing.T) {
 	}
 }
 
+func TestGetOrRegisterDuplicate(t *testing.T) {
+	r := NewRegistry()
+	c := GetOrRegisterCounter("foo", r)
+	if c == nil {
+		t.Fatal("not a counter")
+	}
+	c2 := GetOrRegisterCounter("foo", r)
+	if c != c2 {
+		t.Fatal("duplicate")
+	}
+	i := 0
+	r.Each(func(name, tags string, _ map[string]string, iface interface{}) error {
+		i++
+		if _, ok := iface.(Counter); !ok {
+			t.Fatal(iface)
+		}
+		return nil
+	}, true)
+	if i != 1 {
+		t.Fatal(i)
+	}
+}
+
+func TestGetOrRegisterTypeMismatch(t *testing.T) {
+	defer func() {
+		if r := recover(); r == nil {
+			t.Fatal("must panic")
+		}
+	}()
+	r := NewRegistry()
+	var s string
+	_ = r.GetOrRegister("foo", s)
+}
+
 func TestRegistryGet(t *testing.T) {
 	r := NewRegistry()
 	r.Register("foo", NewCounter())

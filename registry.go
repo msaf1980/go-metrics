@@ -169,7 +169,9 @@ func (r *StandardRegistry) GetOrRegister(name string, i interface{}) interface{}
 		return metric
 	}
 
-	r.register(name, i)
+	if err := r.register(name, i); err != nil {
+		panic(err)
+	}
 	return i
 }
 
@@ -199,7 +201,9 @@ func (r *StandardRegistry) GetOrRegisterT(name string, tagsMap map[string]string
 	if ok {
 		return metric.I
 	}
-	r.registerT(ntags, &ValTagged{I: i, TagsMap: tagsMap})
+	if err := r.registerT(ntags, &ValTagged{I: i, TagsMap: tagsMap}); err != nil {
+		panic(err)
+	}
 	return i
 }
 
