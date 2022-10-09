@@ -5,30 +5,30 @@ import (
 	"strconv"
 )
 
-// GetOrRegisterHistogram returns an existing Histogram or constructs and registers
+// GetOrRegisterHistogram returns an existing UHistogram or constructs and registers
 // a new FixedHistorgam (prometheus-like histogram).
-func GetOrRegisterFixedSumUHistogram(name string, r Registry, startVal, endVal, width int64) Histogram {
+func GetOrRegisterFixedSumUHistogram(name string, r Registry, startVal, endVal, width uint64) UHistogram {
 	if nil == r {
 		r = DefaultRegistry
 	}
 	return r.GetOrRegister(name, func() interface{} {
 		return NewFixedSumUHistogram(startVal, endVal, width)
-	}).(Histogram)
+	}).(UHistogram)
 }
 
-// GetOrRegisterSumUHistogramT returns an existing Histogram or constructs and registers
+// GetOrRegisterSumUHistogramT returns an existing UHistogram or constructs and registers
 // a new FixedHistorgam (prometheus-like histogram).
-func GetOrRegisterFixedSumUHistogramT(name string, tagsMap map[string]string, r Registry, startVal, endVal, width int64) Histogram {
+func GetOrRegisterFixedSumUHistogramT(name string, tagsMap map[string]string, r Registry, startVal, endVal, width uint64) UHistogram {
 	if nil == r {
 		r = DefaultRegistry
 	}
 	return r.GetOrRegisterT(name, tagsMap, func() interface{} {
 		return NewFixedSumUHistogram(startVal, endVal, width)
-	}).(Histogram)
+	}).(UHistogram)
 }
 
 // NewRegisteredFixedSumUHistogram constructs and registers a new FixedSumUHistogram (prometheus-like histogram).
-func NewRegisteredFixedSumUHistogram(name string, r Registry, startVal, endVal, width int64) Histogram {
+func NewRegisteredFixedSumUHistogram(name string, r Registry, startVal, endVal, width uint64) UHistogram {
 	if nil == r {
 		r = DefaultRegistry
 	}
@@ -38,7 +38,7 @@ func NewRegisteredFixedSumUHistogram(name string, r Registry, startVal, endVal, 
 }
 
 // NewRegisteredFixedSumUHistogramT constructs and registers a new FixedSumUHistogram (prometheus-like histogram).
-func NewRegisteredFixedSumUHistogramT(name string, tagsMap map[string]string, r Registry, startVal, endVal, width int64) Histogram {
+func NewRegisteredFixedSumUHistogramT(name string, tagsMap map[string]string, r Registry, startVal, endVal, width uint64) UHistogram {
 	if nil == r {
 		r = DefaultRegistry
 	}
@@ -47,26 +47,26 @@ func NewRegisteredFixedSumUHistogramT(name string, tagsMap map[string]string, r 
 	return h
 }
 
-func GetOrRegisterVSumUHistogram(name string, r Registry, weights []int64, names []string) Histogram {
+func GetOrRegisterVSumUHistogram(name string, r Registry, weights []uint64, names []string) UHistogram {
 	if nil == r {
 		r = DefaultRegistry
 	}
 	return r.GetOrRegister(name, func() interface{} {
 		return NewVSumUHistogram(weights, names)
-	}).(Histogram)
+	}).(UHistogram)
 }
 
-func GetOrRegisterVSumUHistogramT(name string, tagsMap map[string]string, r Registry, weights []int64, names []string) Histogram {
+func GetOrRegisterVSumUHistogramT(name string, tagsMap map[string]string, r Registry, weights []uint64, names []string) UHistogram {
 	if nil == r {
 		r = DefaultRegistry
 	}
 	return r.GetOrRegisterT(name, tagsMap, func() interface{} {
 		return NewVSumUHistogram(weights, names)
-	}).(Histogram)
+	}).(UHistogram)
 }
 
 // NewRegisteredVSumUHistogram constructs and registers a new VSumUHistogram (prometheus-like histogram).
-func NewRegisteredVSumUHistogram(name string, r Registry, weights []int64, names []string) Histogram {
+func NewRegisteredVSumUHistogram(name string, r Registry, weights []uint64, names []string) UHistogram {
 	if nil == r {
 		r = DefaultRegistry
 	}
@@ -76,7 +76,7 @@ func NewRegisteredVSumUHistogram(name string, r Registry, weights []int64, names
 }
 
 // NewRegisteredVSumUHistogramT constructs and registers a new VSumUHistogram (prometheus-like histogram).
-func NewRegisteredVSumUHistogramT(name string, tagsMap map[string]string, r Registry, weights []int64, names []string) Histogram {
+func NewRegisteredVSumUHistogramT(name string, tagsMap map[string]string, r Registry, weights []uint64, names []string) UHistogram {
 	if nil == r {
 		r = DefaultRegistry
 	}
@@ -86,7 +86,7 @@ func NewRegisteredVSumUHistogramT(name string, tagsMap map[string]string, r Regi
 }
 
 type SumUHistogramSnapshot struct {
-	weights        []int64 // Sorted weights, by <=
+	weights        []uint64 // Sorted weights, by <=
 	weightsAliases []string
 	names          []string
 	total          string
@@ -101,14 +101,14 @@ func (h *SumUHistogramSnapshot) Labels() []string {
 	return h.names
 }
 
-func (SumUHistogramSnapshot) SetLabels([]string) Histogram {
-	panic("SetLabels called on a HistogramSnapshot")
+func (SumUHistogramSnapshot) SetLabels([]string) UHistogram {
+	panic("SetLabels called on a UHistogramSnapshot")
 }
 
-func (SumUHistogramSnapshot) AddLabelPrefix(string) Histogram {
+func (SumUHistogramSnapshot) AddLabelPrefix(string) UHistogram {
 	panic("AddLabelPrefix called on a SumUHistogramSnapshot")
 }
-func (SumUHistogramSnapshot) SetNameTotal(string) Histogram {
+func (SumUHistogramSnapshot) SetNameTotal(string) UHistogram {
 	panic("SetNameTotal called on a SumUHistogramSnapshot")
 }
 
@@ -116,7 +116,7 @@ func (h *SumUHistogramSnapshot) NameTotal() string {
 	return h.total
 }
 
-func (h *SumUHistogramSnapshot) Weights() []int64 {
+func (h *SumUHistogramSnapshot) Weights() []uint64 {
 	return h.weights
 }
 
@@ -124,33 +124,33 @@ func (h *SumUHistogramSnapshot) WeightsAliases() []string {
 	return h.weightsAliases
 }
 
-// for static check compatbility with HistogramInterface
+// for static check compatbility with UHistogramInterface
 func (h *SumUHistogramSnapshot) Interface() HistogramInterface {
 	return h
 }
 
-func (h *SumUHistogramSnapshot) Add(v int64) {
+func (h *SumUHistogramSnapshot) Add(v uint64) {
 	panic("Add called on a SumUHistogramSnapshot")
 }
 
 func (h *SumUHistogramSnapshot) Clear() []uint64 {
-	panic("Clear called on a HistogramSnapshot")
+	panic("Clear called on a UHistogramSnapshot")
 }
 
-func (h *SumUHistogramSnapshot) Snapshot() Histogram {
+func (h *SumUHistogramSnapshot) Snapshot() UHistogram {
 	return h
 }
 
 func (SumUHistogramSnapshot) IsSummed() bool { return true }
 
-// A FixedSumUHistogram is implementation of prometheus-like Histogram with fixed-size buckets.
+// A FixedSumUHistogram is implementation of prometheus-like UHistogram with fixed-size buckets.
 type FixedSumUHistogram struct {
-	HistogramStorage
-	start int64
-	width int64
+	UHistogramStorage
+	start uint64
+	width uint64
 }
 
-func NewFixedSumUHistogram(startVal, endVal, width int64) *FixedSumUHistogram {
+func NewFixedSumUHistogram(startVal, endVal, width uint64) *FixedSumUHistogram {
 	if endVal < startVal {
 		startVal, endVal = endVal, startVal
 	}
@@ -163,7 +163,7 @@ func NewFixedSumUHistogram(startVal, endVal, width int64) *FixedSumUHistogram {
 	if n%width != 0 {
 		count++
 	}
-	weights := make([]int64, count)
+	weights := make([]uint64, count)
 	weightsAliases := make([]string, count)
 	labels := make([]string, count)
 	buckets := make([]uint64, count)
@@ -176,7 +176,7 @@ func NewFixedSumUHistogram(startVal, endVal, width int64) *FixedSumUHistogram {
 			labels[i] = ".inf"
 		} else {
 			weights[i] = ge
-			weightsAliases[i] = strconv.FormatInt(ge, 10)
+			weightsAliases[i] = strconv.FormatUint(ge, 10)
 			labels[i] = "." + weightsAliases[i]
 			// names[i] = fmt.Sprintf(fmtStr, prefix, ge)
 			ge += width
@@ -184,7 +184,7 @@ func NewFixedSumUHistogram(startVal, endVal, width int64) *FixedSumUHistogram {
 	}
 
 	return &FixedSumUHistogram{
-		HistogramStorage: HistogramStorage{
+		UHistogramStorage: UHistogramStorage{
 			weights:        weights,
 			weightsAliases: weightsAliases,
 			labels:         labels,
@@ -196,7 +196,7 @@ func NewFixedSumUHistogram(startVal, endVal, width int64) *FixedSumUHistogram {
 	}
 }
 
-func (h *FixedSumUHistogram) Add(v int64) {
+func (h *FixedSumUHistogram) Add(v uint64) {
 	h.lock.Lock()
 	for i := 0; i < len(h.buckets); i++ {
 		h.buckets[i]++
@@ -207,17 +207,17 @@ func (h *FixedSumUHistogram) Add(v int64) {
 	h.lock.Unlock()
 }
 
-func (h *FixedSumUHistogram) SetLabels(labels []string) Histogram {
-	h.HistogramStorage.SetLabels(labels)
+func (h *FixedSumUHistogram) SetLabels(labels []string) UHistogram {
+	h.UHistogramStorage.SetLabels(labels)
 	return h
 }
 
-func (h *FixedSumUHistogram) AddLabelPrefix(labelPrefix string) Histogram {
-	h.HistogramStorage.AddLabelPrefix(labelPrefix)
+func (h *FixedSumUHistogram) AddLabelPrefix(labelPrefix string) UHistogram {
+	h.UHistogramStorage.AddLabelPrefix(labelPrefix)
 	return h
 }
-func (h *FixedSumUHistogram) SetNameTotal(total string) Histogram {
-	h.HistogramStorage.SetNameTotal(total)
+func (h *FixedSumUHistogram) SetNameTotal(total string) UHistogram {
+	h.UHistogramStorage.SetNameTotal(total)
 	return h
 }
 
@@ -232,13 +232,13 @@ func (h *FixedSumUHistogram) Clear() []uint64 {
 
 func (h *FixedSumUHistogram) IsSummed() bool { return true }
 
-// A VSumUHistogram is implementation of prometheus-like Histogram with varibale-size buckets.
+// A VSumUHistogram is implementation of prometheus-like UHistogram with varibale-size buckets.
 type VSumUHistogram struct {
-	HistogramStorage
+	UHistogramStorage
 }
 
-func NewVSumUHistogram(weights []int64, names []string) *VSumUHistogram {
-	w := make([]int64, len(weights)+1)
+func NewVSumUHistogram(weights []uint64, names []string) *VSumUHistogram {
+	w := make([]uint64, len(weights)+1)
 	weightsAliases := make([]string, len(w))
 	copy(w, weights)
 	sort.Slice(w[:len(weights)-1], func(i, j int) bool { return w[i] < w[j] })
@@ -256,7 +256,7 @@ func NewVSumUHistogram(weights []int64, names []string) *VSumUHistogram {
 			weightsAliases[i] = "inf"
 			w[i] = last
 		} else {
-			weightsAliases[i] = strconv.FormatInt(w[i], 10)
+			weightsAliases[i] = strconv.FormatUint(w[i], 10)
 			if i >= len(names) || names[i] == "" {
 				// ns[i] = fmt.Sprintf(fmtStr, prefix, w[i])
 				lbls[i] = "." + weightsAliases[i]
@@ -267,7 +267,7 @@ func NewVSumUHistogram(weights []int64, names []string) *VSumUHistogram {
 	}
 
 	return &VSumUHistogram{
-		HistogramStorage: HistogramStorage{
+		UHistogramStorage: UHistogramStorage{
 			weights:        w,
 			weightsAliases: weightsAliases,
 			labels:         lbls,
@@ -289,12 +289,12 @@ func (h *VSumUHistogram) WeightsAliases() []string {
 	return h.weightsAliases
 }
 
-// for static check compatbility with HistogramInterface
+// for static check compatbility with UHistogramInterface
 func (h *VSumUHistogram) Interface() HistogramInterface {
 	return h
 }
 
-func (h *VSumUHistogram) Snapshot() Histogram {
+func (h *VSumUHistogram) Snapshot() UHistogram {
 	return &SumUHistogramSnapshot{
 		weights:        h.weights,
 		weightsAliases: h.weightsAliases,
@@ -304,7 +304,7 @@ func (h *VSumUHistogram) Snapshot() Histogram {
 	}
 }
 
-func (h *VSumUHistogram) Add(v int64) {
+func (h *VSumUHistogram) Add(v uint64) {
 	h.lock.Lock()
 	for i := 0; i < len(h.buckets); i++ {
 		h.buckets[i]++
@@ -315,17 +315,17 @@ func (h *VSumUHistogram) Add(v int64) {
 	h.lock.Unlock()
 }
 
-func (h *VSumUHistogram) SetLabels(labels []string) Histogram {
-	h.HistogramStorage.SetLabels(labels)
+func (h *VSumUHistogram) SetLabels(labels []string) UHistogram {
+	h.UHistogramStorage.SetLabels(labels)
 	return h
 }
 
-func (h *VSumUHistogram) AddLabelPrefix(labelPrefix string) Histogram {
-	h.HistogramStorage.AddLabelPrefix(labelPrefix)
+func (h *VSumUHistogram) AddLabelPrefix(labelPrefix string) UHistogram {
+	h.UHistogramStorage.AddLabelPrefix(labelPrefix)
 	return h
 }
-func (h *VSumUHistogram) SetNameTotal(total string) Histogram {
-	h.HistogramStorage.SetNameTotal(total)
+func (h *VSumUHistogram) SetNameTotal(total string) UHistogram {
+	h.UHistogramStorage.SetNameTotal(total)
 	return h
 }
 
