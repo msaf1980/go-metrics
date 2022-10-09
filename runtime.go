@@ -63,7 +63,7 @@ var (
 			MSpanSys      Gauge
 			NextGC        Gauge
 			NumGC         Rate
-			GCCPUFraction GaugeFloat64
+			GCCPUFraction FGauge
 			// PauseNs       Histogram
 			PauseTotalNs Gauge
 			StackInUse   Gauge
@@ -239,7 +239,7 @@ func RegisterRuntimeMemStats(r Registry) {
 		runtimeMetrics.MemStats.NextGC = NewGauge()
 		// runtimeMetrics.MemStats.NumGC = NewDiffer(int64(memStats.NextGC))
 		runtimeMetrics.MemStats.NumGC = NewRate()
-		runtimeMetrics.MemStats.GCCPUFraction = NewGaugeFloat64()
+		runtimeMetrics.MemStats.GCCPUFraction = NewFGauge()
 		// runtimeMetrics.MemStats.PauseNs = NewHistogram(NewExpDecaySample(1028, 0.015))
 		runtimeMetrics.MemStats.PauseTotalNs = NewGauge()
 		runtimeMetrics.MemStats.StackInUse = NewGauge()

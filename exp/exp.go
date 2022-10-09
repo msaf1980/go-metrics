@@ -34,7 +34,9 @@ func (exp *exp) expHandler(w http.ResponseWriter, r *http.Request) {
 			fmt.Fprintf(w, "\n  \"%s%s\": %d", name, tags, metric.Count())
 		case metrics.Gauge:
 			fmt.Fprintf(w, "\n  \"%s%s\": %d", name, tags, metric.Value())
-		case metrics.GaugeFloat64:
+		case metrics.UGauge:
+			fmt.Fprintf(w, "\n  \"%s%s\": %d", name, tags, metric.Value())
+		case metrics.FGauge:
 			fmt.Fprintf(w, "\n  \"%s%s\": %f", name, tags, metric.Value())
 		case metrics.Healthcheck:
 			fmt.Fprintf(w, "\n  \"%s%s\": %d", name, tags, metric.Check())

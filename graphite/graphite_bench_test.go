@@ -141,10 +141,10 @@ func BenchmarkGaugeT(b *testing.B) {
 	wg.Wait()
 }
 
-func BenchmarkGaugeFloat64(b *testing.B) {
+func BenchmarkFGauge(b *testing.B) {
 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	g := metrics.GetOrRegisterGaugeFloat64("bar", r)
+	g := metrics.GetOrRegisterFGauge("bar", r)
 	g.Update(47)
 
 	graphite := WithConfig(cfg)
@@ -162,10 +162,10 @@ func BenchmarkGaugeFloat64(b *testing.B) {
 	wg.Wait()
 }
 
-func BenchmarkGaugeFloat64T(b *testing.B) {
+func BenchmarkFGaugeT(b *testing.B) {
 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	g := metrics.GetOrRegisterGaugeFloat64T("bar", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
+	g := metrics.GetOrRegisterFGaugeT("bar", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 	g.Update(47)
 
 	graphite := WithConfig(cfg)
@@ -431,9 +431,9 @@ func BenchmarkAll(b *testing.B) {
 	}
 
 	// 100 float gauges
-	gf := make([]metrics.GaugeFloat64, 50)
+	gf := make([]metrics.FGauge, 50)
 	for i := 0; i < len(gf); i++ {
-		gf[i] = metrics.GetOrRegisterGaugeFloat64("barf", r)
+		gf[i] = metrics.GetOrRegisterFGauge("barf", r)
 	}
 
 	// s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
@@ -493,9 +493,9 @@ func BenchmarkAllT(b *testing.B) {
 	}
 
 	// 100 float gauges
-	gf := make([]metrics.GaugeFloat64, 50)
+	gf := make([]metrics.FGauge, 50)
 	for i := 0; i < len(gf); i++ {
-		gf[i] = metrics.GetOrRegisterGaugeFloat64T("barf", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
+		gf[i] = metrics.GetOrRegisterFGaugeT("barf", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 	}
 
 	// s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
@@ -546,7 +546,7 @@ func BenchmarkOnce(b *testing.B) {
 	g := metrics.GetOrRegisterGauge("bar", r)
 	g.Update(47)
 
-	gf := metrics.GetOrRegisterGaugeFloat64("barf", r)
+	gf := metrics.GetOrRegisterFGauge("barf", r)
 	gf.Update(47)
 
 	// s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)
@@ -586,7 +586,7 @@ func BenchmarkOnceT(b *testing.B) {
 	g := metrics.GetOrRegisterGaugeT("bar", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 	g.Update(47)
 
-	gf := metrics.GetOrRegisterGaugeFloat64T("barf", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
+	gf := metrics.GetOrRegisterFGaugeT("barf", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
 	gf.Update(47)
 
 	// s := metrics.NewExpDecaySample(1028, 0.015) // or metrics.NewUniformSample(1028)

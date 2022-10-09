@@ -5,48 +5,48 @@ import (
 	"sync/atomic"
 )
 
-// GaugeFloat64s hold a float64 value that can be set arbitrarily.
+// FGauges hold a float64 value that can be set arbitrarily.
 //
 // Plain: {PREFIX}.{NAME}
 //
 // Tagged: {TAG_PREFIX}.{NAME}
-type GaugeFloat64 interface {
-	Snapshot() GaugeFloat64
+type FGauge interface {
+	Snapshot() FGauge
 	Update(float64)
 	Value() float64
 }
 
-// GetOrRegisterGaugeFloat64 returns an existing GaugeFloat64 or constructs and registers a
-// new StandardGaugeFloat64.
-func GetOrRegisterGaugeFloat64(name string, r Registry) GaugeFloat64 {
+// GetOrRegisterFGauge returns an existing FGauge or constructs and registers a
+// new StandardFGauge.
+func GetOrRegisterFGauge(name string, r Registry) FGauge {
 	if nil == r {
 		r = DefaultRegistry
 	}
-	return r.GetOrRegister(name, NewGaugeFloat64()).(GaugeFloat64)
+	return r.GetOrRegister(name, NewFGauge()).(FGauge)
 }
 
-// GetOrRegisterGaugeFloat64T returns an existing GaugeFloat64 or constructs and registers a
-// new StandardGaugeFloat64.
-func GetOrRegisterGaugeFloat64T(name string, tagsMap map[string]string, r Registry) GaugeFloat64 {
+// GetOrRegisterFGaugeT returns an existing FGauge or constructs and registers a
+// new StandardFGauge.
+func GetOrRegisterFGaugeT(name string, tagsMap map[string]string, r Registry) FGauge {
 	if nil == r {
 		r = DefaultRegistry
 	}
-	return r.GetOrRegisterT(name, tagsMap, NewGaugeFloat64()).(GaugeFloat64)
+	return r.GetOrRegisterT(name, tagsMap, NewFGauge()).(FGauge)
 }
 
-// NewGaugeFloat64 constructs a new StandardGaugeFloat64.
-func NewGaugeFloat64() GaugeFloat64 {
+// NewFGauge constructs a new StandardFGauge.
+func NewFGauge() FGauge {
 	if UseNilMetrics {
-		return NilGaugeFloat64{}
+		return NilFGauge{}
 	}
-	return &StandardGaugeFloat64{
+	return &StandardFGauge{
 		value: 0.0,
 	}
 }
 
-// NewRegisteredGaugeFloat64 constructs and registers a new StandardGaugeFloat64.
-func NewRegisteredGaugeFloat64(name string, r Registry) GaugeFloat64 {
-	c := NewGaugeFloat64()
+// NewRegisteredFGauge constructs and registers a new StandardFGauge.
+func NewRegisteredFGauge(name string, r Registry) FGauge {
+	c := NewFGauge()
 	if nil == r {
 		r = DefaultRegistry
 	}
@@ -54,9 +54,9 @@ func NewRegisteredGaugeFloat64(name string, r Registry) GaugeFloat64 {
 	return c
 }
 
-// NewRegisteredGaugeFloat64T constructs and registers a new StandardGaugeFloat64.
-func NewRegisteredGaugeFloat64T(name string, tagsMap map[string]string, r Registry) GaugeFloat64 {
-	c := NewGaugeFloat64()
+// NewRegisteredFGaugeT constructs and registers a new StandardFGauge.
+func NewRegisteredFGaugeT(name string, tagsMap map[string]string, r Registry) FGauge {
+	c := NewFGauge()
 	if nil == r {
 		r = DefaultRegistry
 	}
@@ -65,16 +65,16 @@ func NewRegisteredGaugeFloat64T(name string, tagsMap map[string]string, r Regist
 }
 
 // NewFunctionalGauge constructs a new FunctionalGauge.
-func NewFunctionalGaugeFloat64(f func() float64) GaugeFloat64 {
+func NewFunctionalFGauge(f func() float64) FGauge {
 	if UseNilMetrics {
-		return NilGaugeFloat64{}
+		return NilFGauge{}
 	}
-	return &FunctionalGaugeFloat64{value: f}
+	return &FunctionalFGauge{value: f}
 }
 
 // NewRegisteredFunctionalGauge constructs and registers a new StandardGauge.
-func NewRegisteredFunctionalGaugeFloat64(name string, r Registry, f func() float64) GaugeFloat64 {
-	c := NewFunctionalGaugeFloat64(f)
+func NewRegisteredFunctionalFGauge(name string, r Registry, f func() float64) FGauge {
+	c := NewFunctionalFGauge(f)
 	if nil == r {
 		r = DefaultRegistry
 	}
@@ -83,8 +83,8 @@ func NewRegisteredFunctionalGaugeFloat64(name string, r Registry, f func() float
 }
 
 // NewRegisteredFunctionalGaugeT constructs and registers a new StandardGauge.
-func NewRegisteredFunctionalGaugeFloat64T(name string, tagsMap map[string]string, r Registry, f func() float64) GaugeFloat64 {
-	c := NewFunctionalGaugeFloat64(f)
+func NewRegisteredFunctionalFGaugeT(name string, tagsMap map[string]string, r Registry, f func() float64) FGauge {
+	c := NewFunctionalFGauge(f)
 	if nil == r {
 		r = DefaultRegistry
 	}
@@ -92,67 +92,67 @@ func NewRegisteredFunctionalGaugeFloat64T(name string, tagsMap map[string]string
 	return c
 }
 
-// GaugeFloat64Snapshot is a read-only copy of another GaugeFloat64.
-type GaugeFloat64Snapshot float64
+// FGaugeSnapshot is a read-only copy of another FGauge.
+type FGaugeSnapshot float64
 
 // Snapshot returns the snapshot.
-func (g GaugeFloat64Snapshot) Snapshot() GaugeFloat64 { return g }
+func (g FGaugeSnapshot) Snapshot() FGauge { return g }
 
 // Update panics.
-func (GaugeFloat64Snapshot) Update(float64) {
-	panic("Update called on a GaugeFloat64Snapshot")
+func (FGaugeSnapshot) Update(float64) {
+	panic("Update called on a FGaugeSnapshot")
 }
 
 // Value returns the value at the time the snapshot was taken.
-func (g GaugeFloat64Snapshot) Value() float64 { return float64(g) }
+func (g FGaugeSnapshot) Value() float64 { return float64(g) }
 
 // NilGauge is a no-op Gauge.
-type NilGaugeFloat64 struct{}
+type NilFGauge struct{}
 
 // Snapshot is a no-op.
-func (NilGaugeFloat64) Snapshot() GaugeFloat64 { return NilGaugeFloat64{} }
+func (NilFGauge) Snapshot() FGauge { return NilFGauge{} }
 
 // Update is a no-op.
-func (NilGaugeFloat64) Update(v float64) {}
+func (NilFGauge) Update(v float64) {}
 
 // Value is a no-op.
-func (NilGaugeFloat64) Value() float64 { return 0.0 }
+func (NilFGauge) Value() float64 { return 0.0 }
 
-// StandardGaugeFloat64 is the standard implementation of a GaugeFloat64 and uses
+// StandardFGauge is the standard implementation of a FGauge and uses
 // sync.Mutex to manage a single float64 value.
-type StandardGaugeFloat64 struct {
+type StandardFGauge struct {
 	value uint64
 }
 
 // Snapshot returns a read-only copy of the gauge.
-func (g *StandardGaugeFloat64) Snapshot() GaugeFloat64 {
-	return GaugeFloat64Snapshot(g.Value())
+func (g *StandardFGauge) Snapshot() FGauge {
+	return FGaugeSnapshot(g.Value())
 }
 
 // Update updates the gauge's value.
-func (g *StandardGaugeFloat64) Update(v float64) {
+func (g *StandardFGauge) Update(v float64) {
 	atomic.StoreUint64(&g.value, math.Float64bits(v))
 }
 
 // Value returns the gauge's current value.
-func (g *StandardGaugeFloat64) Value() float64 {
+func (g *StandardFGauge) Value() float64 {
 	return math.Float64frombits(atomic.LoadUint64(&g.value))
 }
 
-// FunctionalGaugeFloat64 returns value from given function
-type FunctionalGaugeFloat64 struct {
+// FunctionalFGauge returns value from given function
+type FunctionalFGauge struct {
 	value func() float64
 }
 
 // Value returns the gauge's current value.
-func (g FunctionalGaugeFloat64) Value() float64 {
+func (g FunctionalFGauge) Value() float64 {
 	return g.value()
 }
 
 // Snapshot returns the snapshot.
-func (g FunctionalGaugeFloat64) Snapshot() GaugeFloat64 { return GaugeFloat64Snapshot(g.Value()) }
+func (g FunctionalFGauge) Snapshot() FGauge { return FGaugeSnapshot(g.Value()) }
 
 // Update panics.
-func (FunctionalGaugeFloat64) Update(float64) {
-	panic("Update called on a FunctionalGaugeFloat64")
+func (FunctionalFGauge) Update(float64) {
+	panic("Update called on a FunctionalFGauge")
 }

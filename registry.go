@@ -265,7 +265,9 @@ func (r *StandardRegistry) GetAll() map[string]map[string]interface{} {
 			values["count"] = metric.Count()
 		case Gauge:
 			values["value"] = metric.Value()
-		case GaugeFloat64:
+		case UGauge:
+			values["value"] = metric.Value()
+		case FGauge:
 			values["value"] = metric.Value()
 		case Healthcheck:
 			metric.Check()
@@ -396,11 +398,11 @@ func (r *StandardRegistry) register(name string, i interface{}) error {
 		updater.Register(s)
 	}
 	switch i.(type) {
-	case Counter, DownCounter, Gauge, GaugeFloat64, Healthcheck, HistogramInterface, Rate, FRate:
+	case Counter, DownCounter, Gauge, UGauge, FGauge, Healthcheck, HistogramInterface, Rate, FRate:
 		// , Histogram, Meter, Timer:
 		r.metrics[name] = i
 	default:
-		return fmt.Errorf("invalid metric '%s': %#v", name, i)
+		return fmt.Errorf("invalid metric type '%s': %#v", name, i)
 	}
 	return nil
 }
@@ -413,7 +415,7 @@ func (r *StandardRegistry) registerT(ntags NameTagged, v *ValTagged) error {
 		updater.Register(s)
 	}
 	switch v.I.(type) {
-	case Counter, DownCounter, Gauge, GaugeFloat64, Healthcheck, HistogramInterface, Rate, FRate:
+	case Counter, DownCounter, Gauge, UGauge, FGauge, Healthcheck, HistogramInterface, Rate, FRate:
 		// , Histogram, Meter, Timer:
 		r.metricsT[ntags] = v
 	default:

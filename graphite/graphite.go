@@ -358,7 +358,11 @@ func (g *Graphite) send(r metrics.Registry) error {
 			if err = g.writeIntMetric(name, "", tags, metric.Value(), now); err != nil {
 				return err
 			}
-		case metrics.GaugeFloat64:
+		case metrics.UGauge:
+			if err = g.writeUintMetric(name, "", tags, metric.Value(), now); err != nil {
+				return err
+			}
+		case metrics.FGauge:
 			// fmt.Fprintf(w, "%s.%s.value %f %d\n", c.Prefix, name, metric.Value(), now)
 			if err = g.writeFloatMetric(name, "", tags, metric.Value(), now); err != nil {
 				return err

@@ -49,7 +49,9 @@ func LogScaledOnCue(r metrics.Registry, ch chan interface{}, scale time.Duration
 				l.Printf("counter %s%s count: %9d\n", name, tags, metric.Count())
 			case metrics.Gauge:
 				l.Printf("gauge %s%s value: %9d\n", name, tags, metric.Value())
-			case metrics.GaugeFloat64:
+			case metrics.UGauge:
+				l.Printf("gauge %s%s value: %9d\n", name, tags, metric.Value())
+			case metrics.FGauge:
 				l.Printf("gauge %s%s value: %f\n", name, tags, metric.Value())
 			case metrics.Healthcheck:
 				l.Printf("healthcheck %s%s up: %d\n", name, tags, metric.Check())

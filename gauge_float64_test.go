@@ -3,7 +3,7 @@ package metrics
 import "testing"
 
 func BenchmarkGuageFloat64(b *testing.B) {
-	g := NewGaugeFloat64()
+	g := NewFGauge()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		g.Update(float64(i))
@@ -11,7 +11,7 @@ func BenchmarkGuageFloat64(b *testing.B) {
 }
 
 func BenchmarkGuageFloat64Parallel(b *testing.B) {
-	g := NewGaugeFloat64()
+	g := NewFGauge()
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {
@@ -20,16 +20,16 @@ func BenchmarkGuageFloat64Parallel(b *testing.B) {
 	})
 }
 
-func TestGaugeFloat64(t *testing.T) {
-	g := NewGaugeFloat64()
+func TestFGauge(t *testing.T) {
+	g := NewFGauge()
 	g.Update(float64(47.0))
 	if v := g.Value(); float64(47.0) != v {
 		t.Errorf("g.Value(): 47.0 != %v\n", v)
 	}
 }
 
-func TestGaugeFloat64Snapshot(t *testing.T) {
-	g := NewGaugeFloat64()
+func TestFGaugeSnapshot(t *testing.T) {
+	g := NewFGauge()
 	g.Update(float64(47.0))
 	snapshot := g.Snapshot()
 	g.Update(float64(0))
@@ -38,18 +38,18 @@ func TestGaugeFloat64Snapshot(t *testing.T) {
 	}
 }
 
-func TestGetOrRegisterGaugeFloat64(t *testing.T) {
+func TestGetOrRegisterFGauge(t *testing.T) {
 	r := NewRegistry()
-	NewRegisteredGaugeFloat64("foo", r).Update(float64(47.0))
+	NewRegisteredFGauge("foo", r).Update(float64(47.0))
 	// t.Logf("registry: %v", r)
-	if g := GetOrRegisterGaugeFloat64("foo", r); float64(47.0) != g.Value() {
+	if g := GetOrRegisterFGauge("foo", r); float64(47.0) != g.Value() {
 		t.Fatal(g)
 	}
 }
 
-func TestFunctionalGaugeFloat64(t *testing.T) {
+func TestFunctionalFGauge(t *testing.T) {
 	var counter float64
-	fg := NewFunctionalGaugeFloat64(func() float64 {
+	fg := NewFunctionalFGauge(func() float64 {
 		counter++
 		return counter
 	})
@@ -60,10 +60,10 @@ func TestFunctionalGaugeFloat64(t *testing.T) {
 	}
 }
 
-func TestGetOrRegisterFunctionalGaugeFloat64(t *testing.T) {
+func TestGetOrRegisterFunctionalFGauge(t *testing.T) {
 	r := NewRegistry()
-	NewRegisteredFunctionalGaugeFloat64("foo", r, func() float64 { return 47 })
-	if g := GetOrRegisterGaugeFloat64("foo", r); g.Value() != 47 {
+	NewRegisteredFunctionalFGauge("foo", r, func() float64 { return 47 })
+	if g := GetOrRegisterFGauge("foo", r); g.Value() != 47 {
 		t.Fatal(g)
 	}
 }

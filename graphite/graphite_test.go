@@ -94,8 +94,9 @@ func TestWrites(t *testing.T) {
 
 	metrics.GetOrRegisterDiffer("differ", r, 0).Update(3)
 	metrics.GetOrRegisterDiffer("differ", r, 0).Update(9)
-	metrics.GetOrRegisterGauge("gauge", r).Update(3)
-	metrics.GetOrRegisterGaugeFloat64("gauge_float", r).Update(2.1)
+	metrics.GetOrRegisterGauge("gauge", r).Update(-3)
+	metrics.GetOrRegisterUGauge("ugauge", r).Update(1)
+	metrics.GetOrRegisterFGauge("gauge_float", r).Update(2.1)
 
 	h := metrics.GetOrRegisterVHistogram("histogram", r, []int64{1, 2, 5, 8, 20}, nil)
 	h.Add(2)
@@ -143,7 +144,8 @@ func TestWrites(t *testing.T) {
 		"foobar.dcounter": {V: -4.0},
 		// gauge
 		"foobar.differ":      {V: 6.0},
-		"foobar.gauge":       {V: 3.0},
+		"foobar.gauge":       {V: -3.0},
+		"foobar.ugauge":      {V: 1.0},
 		"foobar.gauge_float": {V: 2.1},
 		// histogram
 		"foobar.histogram.1":     {V: 0},

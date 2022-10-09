@@ -23,7 +23,9 @@ func Syslog(r metrics.Registry, d time.Duration, w *syslog.Writer, minLock bool)
 				w.Info(fmt.Sprintf("counter %s%s count: %d", name, tags, metric.Count()))
 			case metrics.Gauge:
 				w.Info(fmt.Sprintf("gauge %s%s value: %d", name, tags, metric.Value()))
-			case metrics.GaugeFloat64:
+			case metrics.UGauge:
+				w.Info(fmt.Sprintf("gauge %s%s value: %d", name, tags, metric.Value()))
+			case metrics.FGauge:
 				w.Info(fmt.Sprintf("gauge %s%s: value: %f", name, tags, metric.Value()))
 			case metrics.Healthcheck:
 				w.Info(fmt.Sprintf("healthcheck %s%s up: %d", name, tags, metric.Check()))

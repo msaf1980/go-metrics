@@ -27,6 +27,15 @@ func TestExp(t *testing.T) {
 	dc := metrics.GetOrRegisterDownCounter("count", r)
 	dc.Dec(4)
 
+	g := metrics.GetOrRegisterGauge("gauge", r)
+	g.Update(-2)
+
+	gu := metrics.GetOrRegisterUGauge("ugauge", r)
+	gu.Update(1)
+
+	gf := metrics.GetOrRegisterFGauge("fgauge", r)
+	gf.Update(1.1)
+
 	h := metrics.NewUFixedHistogram(1, 3, 1).AddLabelPrefix("req_")
 	h.Add(2)
 	if err := r.Register("histogram", h); err != nil {
@@ -94,6 +103,9 @@ func TestExp(t *testing.T) {
 	want := map[string]float64{
 		"count;tag1=value1;tag21=value21": 46,
 		"count":                           -4,
+		"gauge":                           -2,
+		"ugauge":                          1,
+		"fgauge":                          1.1,
 		"histogram.req_1":                 0,
 		"histogram.req_2":                 1,
 		"histogram.req_3":                 0,

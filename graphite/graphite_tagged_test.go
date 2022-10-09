@@ -21,7 +21,7 @@ func TestWritesT(t *testing.T) {
 	metrics.GetOrRegisterDifferT("differ", map[string]string{"tag1": "value1", "tag21": "value21"}, r, 0).Update(9)
 	metrics.GetOrRegisterGauge("gauge", r).Update(4) // non tagged
 	metrics.GetOrRegisterGaugeT("gauge", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(3)
-	metrics.GetOrRegisterGaugeFloat64T("gauge_float", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(2.1)
+	metrics.GetOrRegisterFGaugeT("gauge_float", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Update(2.1)
 
 	h := metrics.NewVHistogram([]int64{1, 2, 5, 8, 20}, nil)
 	h.Add(2)
