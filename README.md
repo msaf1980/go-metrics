@@ -2,7 +2,7 @@ go-metrics
 ==========
 
 Golang metrics library:
-Based on `https://github.com/rcrowley/go-metrics`
+Initialyy based on `https://github.com/rcrowley/go-metrics`
 Main changes:
 1. Reduce alocations for better perfomance
 2. Read-lock during Registry.Each iterator (for avoid copy registry storage)
