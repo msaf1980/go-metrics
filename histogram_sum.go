@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"math"
 	"sort"
 	"strconv"
 )
@@ -171,7 +172,7 @@ func NewFixedSumHistogram(startVal, endVal, width int64) *FixedSumHistogram {
 	// fmtStr := fmt.Sprintf("%%s%%0%dd", len(strconv.FormatUint(endVal+width, 10)))
 	for i := 0; i < len(weights); i++ {
 		if i == len(weights)-1 {
-			weights[i] = ge
+			weights[i] = math.MaxInt64
 			weightsAliases[i] = "inf"
 			labels[i] = ".inf"
 		} else {
@@ -242,7 +243,7 @@ func NewVSumHistogram(weights []int64, names []string) *VSumHistogram {
 	weightsAliases := make([]string, len(w))
 	copy(w, weights)
 	sort.Slice(w[:len(weights)-1], func(i, j int) bool { return w[i] < w[j] })
-	last := w[len(w)-2] + 1
+	// last := w[len(w)-2] + 1
 	lbls := make([]string, len(w))
 
 	// fmtStr := fmt.Sprintf("%%s%%0%dd", len(strconv.FormatUint(last, 10)))
@@ -254,7 +255,7 @@ func NewVSumHistogram(weights []int64, names []string) *VSumHistogram {
 				lbls[i] = names[i]
 			}
 			weightsAliases[i] = "inf"
-			w[i] = last
+			w[i] = math.MaxInt64
 		} else {
 			weightsAliases[i] = strconv.FormatInt(w[i], 10)
 			if i >= len(names) || names[i] == "" {

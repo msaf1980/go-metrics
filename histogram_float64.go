@@ -268,6 +268,9 @@ func NewFFixedHistogram(startVal, endVal, width float64) FHistogram {
 	if endVal < startVal {
 		startVal, endVal = endVal, startVal
 	}
+	if width < 0 {
+		width = -width
+	}
 	n := (endVal - startVal) / width
 	if n > float64(int(n)) {
 		n++

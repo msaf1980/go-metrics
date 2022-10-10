@@ -7,7 +7,7 @@ import (
 
 // Updated defines the metrics which need to be async updated with Tick.
 type Updated interface {
-	Update()
+	Tick()
 }
 
 // meterUpdater ticks meters every 5s from a single goroutine.
@@ -84,6 +84,6 @@ func (ma *meterUpdater) tickMeters() {
 	ma.RLock()
 	defer ma.RUnlock()
 	for meter := range ma.meters {
-		meter.Update()
+		meter.Tick()
 	}
 }

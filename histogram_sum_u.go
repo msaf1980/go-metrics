@@ -1,6 +1,7 @@
 package metrics
 
 import (
+	"math"
 	"sort"
 	"strconv"
 )
@@ -154,9 +155,6 @@ func NewFixedSumUHistogram(startVal, endVal, width uint64) *FixedSumUHistogram {
 	if endVal < startVal {
 		startVal, endVal = endVal, startVal
 	}
-	if width < 0 {
-		width = -width
-	}
 	n := endVal - startVal
 
 	count := n/width + 2
@@ -242,7 +240,6 @@ func NewVSumUHistogram(weights []uint64, names []string) *VSumUHistogram {
 	weightsAliases := make([]string, len(w))
 	copy(w, weights)
 	sort.Slice(w[:len(weights)-1], func(i, j int) bool { return w[i] < w[j] })
-	last := w[len(w)-2] + 1
 	lbls := make([]string, len(w))
 
 	// fmtStr := fmt.Sprintf("%%s%%0%dd", len(strconv.FormatUint(last, 10)))
@@ -254,7 +251,7 @@ func NewVSumUHistogram(weights []uint64, names []string) *VSumUHistogram {
 				lbls[i] = names[i]
 			}
 			weightsAliases[i] = "inf"
-			w[i] = last
+			w[i] = math.MaxUint64
 		} else {
 			weightsAliases[i] = strconv.FormatUint(w[i], 10)
 			if i >= len(names) || names[i] == "" {
