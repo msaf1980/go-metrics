@@ -12,7 +12,7 @@ import "sync/atomic"
 type Counter interface {
 	Clear() uint64
 	Count() uint64
-	Inc(uint64)
+	Add(uint64)
 	Snapshot() Counter
 }
 
@@ -74,7 +74,7 @@ func (CounterSnapshot) Clear() uint64 {
 func (c CounterSnapshot) Count() uint64 { return uint64(c) }
 
 // Inc panics.
-func (CounterSnapshot) Inc(uint64) {
+func (CounterSnapshot) Add(uint64) {
 	panic("Inc called on a CounterSnapshot")
 }
 
@@ -91,7 +91,7 @@ func (NilCounter) Clear() uint64 { return 0 }
 func (NilCounter) Count() uint64 { return 0 }
 
 // Inc is a no-op.
-func (NilCounter) Inc(i uint64) {}
+func (NilCounter) Add(i uint64) {}
 
 // Snapshot is a no-op.
 func (NilCounter) Snapshot() Counter { return NilCounter{} }
@@ -113,7 +113,7 @@ func (c *StandardCounter) Count() uint64 {
 }
 
 // Inc increments the Counter by the given amount.
-func (c *StandardCounter) Inc(i uint64) {
+func (c *StandardCounter) Add(i uint64) {
 	atomic.AddUint64(&c.count, i)
 }
 

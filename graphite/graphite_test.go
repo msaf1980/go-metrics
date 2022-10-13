@@ -89,8 +89,8 @@ func TestWrites(t *testing.T) {
 	sb, res, l, r, c, wg := newTestServer(t, "foobar", "footag")
 	defer r.UnregisterAll()
 
-	metrics.GetOrRegisterCounter("counter", r).Inc(2)
-	metrics.GetOrRegisterDownCounter("dcounter", r).Dec(4)
+	metrics.GetOrRegisterCounter("counter", r).Add(2)
+	metrics.GetOrRegisterDownCounter("dcounter", r).Sub(4)
 
 	metrics.GetOrRegisterDiffer("differ", r, 0).Update(3)
 	metrics.GetOrRegisterDiffer("differ", r, 0).Update(9)

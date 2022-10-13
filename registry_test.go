@@ -303,7 +303,7 @@ func TestRegistryGet(t *testing.T) {
 	if count := r.Get("foo").(Counter).Count(); count != 0 {
 		t.Fatal(count)
 	}
-	r.Get("foo").(Counter).Inc(1)
+	r.Get("foo").(Counter).Add(1)
 	if count := r.Get("foo").(Counter).Count(); count != 1 {
 		t.Fatal(count)
 	}

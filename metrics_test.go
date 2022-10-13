@@ -82,7 +82,7 @@ func BenchmarkMetrics(b *testing.B) {
 			defer wg.Done()
 			//log.Println("go", i)
 			for i := 0; i < b.N; i++ {
-				c.Inc(1)
+				c.Add(1)
 				g.Update(int64(i))
 				gf.Update(float64(i))
 				// h.Update(int64(i))
@@ -104,7 +104,7 @@ func BenchmarkMetrics(b *testing.B) {
 func Example() {
 	c := NewCounter()
 	Register("money", c)
-	c.Inc(17)
+	c.Add(17)
 
 	// Threadsafe registration
 	// t := GetOrRegisterTimer("db.get.latency", nil)

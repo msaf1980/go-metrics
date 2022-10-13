@@ -11,11 +11,11 @@ func TestWritesT(t *testing.T) {
 	sb, res, l, r, c, wg := newTestServer(t, "foobar", "footag")
 	defer r.UnregisterAll()
 
-	metrics.GetOrRegisterCounterT("counter", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Inc(2)
+	metrics.GetOrRegisterCounterT("counter", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Add(2)
 	// check for no conflicts with tagged counter
-	metrics.GetOrRegisterCounter("counter", r).Inc(2)
+	metrics.GetOrRegisterCounter("counter", r).Add(2)
 
-	metrics.GetOrRegisterDownCounterT("dcounter", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Dec(4)
+	metrics.GetOrRegisterDownCounterT("dcounter", map[string]string{"tag1": "value1", "tag21": "value21"}, r).Sub(4)
 
 	metrics.GetOrRegisterDifferT("differ", map[string]string{"tag1": "value1", "tag21": "value21"}, r, 0).Update(3)
 	metrics.GetOrRegisterDifferT("differ", map[string]string{"tag1": "value1", "tag21": "value21"}, r, 0).Update(9)

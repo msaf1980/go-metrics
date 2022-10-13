@@ -22,10 +22,10 @@ func TestExp(t *testing.T) {
 	r := metrics.NewRegistry()
 
 	c := metrics.GetOrRegisterCounterT("count", map[string]string{"tag1": "value1", "tag21": "value21"}, r)
-	c.Inc(46)
+	c.Add(46)
 
 	dc := metrics.GetOrRegisterDownCounter("count", r)
-	dc.Dec(4)
+	dc.Sub(4)
 
 	g := metrics.GetOrRegisterGauge("gauge", r)
 	g.Update(-2)

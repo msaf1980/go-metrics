@@ -68,7 +68,7 @@ func BenchmarkCounter(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		c.Inc(1)
+		c.Add(1)
 		if err := graphite.send(r); err != nil {
 			b.Fatal(err)
 		}
@@ -88,7 +88,7 @@ func BenchmarkCounterT(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		c.Inc(1)
+		c.Add(1)
 		if err := graphite.send(r); err != nil {
 			b.Fatal(err)
 		}
@@ -449,7 +449,7 @@ func BenchmarkAll(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for i := 0; i < len(c); i++ {
-			c[i].Inc(1)
+			c[i].Add(1)
 		}
 		for i := 0; i < len(differ); i++ {
 			differ[i].Update(int64(i))
@@ -511,7 +511,7 @@ func BenchmarkAllT(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		for i := 0; i < len(c); i++ {
-			c[i].Inc(1)
+			c[i].Add(1)
 		}
 		for i := 0; i < len(differ); i++ {
 			differ[i].Update(int64(i))
@@ -559,7 +559,7 @@ func BenchmarkOnce(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		c.Inc(1)
+		c.Add(1)
 		differ.Update(int64(i))
 		g.Update(1)
 		gf.Update(1.1)
@@ -599,7 +599,7 @@ func BenchmarkOnceT(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		c.Inc(1)
+		c.Add(1)
 		differ.Update(int64(i))
 		g.Update(1)
 		gf.Update(1.1)

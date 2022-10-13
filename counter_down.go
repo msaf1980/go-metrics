@@ -6,8 +6,8 @@ import "sync/atomic"
 type DownCounter interface {
 	Clear() int64
 	Count() int64
-	Inc(int64)
-	Dec(int64)
+	Add(int64)
+	Sub(int64)
 	Snapshot() DownCounter
 }
 
@@ -69,12 +69,12 @@ func (DownCounterSnapshot) Clear() int64 {
 func (c DownCounterSnapshot) Count() int64 { return int64(c) }
 
 // Inc panics.
-func (DownCounterSnapshot) Inc(int64) {
+func (DownCounterSnapshot) Add(int64) {
 	panic("Inc called on a DownCounterSnapshot")
 }
 
 // Inc panics.
-func (DownCounterSnapshot) Dec(int64) {
+func (DownCounterSnapshot) Sub(int64) {
 	panic("Inc called on a DownCounterSnapshot")
 }
 
@@ -91,9 +91,9 @@ func (NilDownCounter) Clear() int64 { return 0 }
 func (NilDownCounter) Count() int64 { return 0 }
 
 // Inc is a no-op.
-func (NilDownCounter) Inc(i int64) {}
+func (NilDownCounter) Add(i int64) {}
 
-func (NilDownCounter) Dec(i int64) {}
+func (NilDownCounter) Sub(i int64) {}
 
 // Snapshot is a no-op.
 func (NilDownCounter) Snapshot() DownCounter { return NilDownCounter{} }
@@ -115,12 +115,12 @@ func (c *StandardDownCounter) Count() int64 {
 }
 
 // Inc increments the DownCounter by the given amount.
-func (c *StandardDownCounter) Inc(i int64) {
+func (c *StandardDownCounter) Add(i int64) {
 	atomic.AddInt64(&c.count, i)
 }
 
 // Dec decrements the DownCounter by the given amount.
-func (c *StandardDownCounter) Dec(i int64) {
+func (c *StandardDownCounter) Sub(i int64) {
 	atomic.AddInt64(&c.count, -i)
 }
 
