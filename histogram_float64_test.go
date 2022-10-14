@@ -50,7 +50,7 @@ func TestNewFFixedloatHistogram(t *testing.T) {
 	}
 	for i, tt := range tests {
 		t.Run("#"+strconv.Itoa(i), func(t *testing.T) {
-			got := NewFFixedHistogram(tt.startVal, tt.endVal, tt.width)
+			got := NewFixedFHistogram(tt.startVal, tt.endVal, tt.width)
 			if tt.labelPrefix != "" {
 				got.AddLabelPrefix(tt.labelPrefix)
 			}
@@ -79,11 +79,11 @@ func TestNewFFixedloatHistogram(t *testing.T) {
 	}
 }
 
-func TestFFixedHistogram_Add(t *testing.T) {
+func TestFixedFHistogram_Add(t *testing.T) {
 	startVal := 10.0
 	width := 10.0
 	endVal := 50.
-	h := NewFFixedHistogram(startVal, endVal, width)
+	h := NewFixedFHistogram(startVal, endVal, width)
 	r := NewRegistry()
 	if err := r.Register("histogram", h); err != nil {
 		t.Error(err)
@@ -120,11 +120,11 @@ func TestFFixedHistogram_Add(t *testing.T) {
 	}
 }
 
-func TestFFixedHistogram_SetNames(t *testing.T) {
+func TestFixedFHistogram_SetNames(t *testing.T) {
 	startVal := float64(10.1)
 	width := float64(10.2)
 	endVal := float64(50)
-	h := NewFFixedHistogram(startVal, endVal, width)
+	h := NewFixedFHistogram(startVal, endVal, width)
 
 	wantLabels := []string{".10_10", ".20_30", ".30_50", ".40_70", ".50_90", ".inf"}
 	weightsAliases := []string{"10_10", "20_30", "30_50", "40_70", "50_90", "inf"}
@@ -167,12 +167,12 @@ func TestFFixedHistogram_SetNames(t *testing.T) {
 	}
 }
 
-func TestFFixedHistogram_Snapshot(t *testing.T) {
+func TestFixedFHistogram_Snapshot(t *testing.T) {
 	startVal := 10.0
 	width := 10.0
 	endVal := 50.0
 	r := NewRegistry()
-	h := GetOrRegisterFFixedHistogram("histogram", r, startVal, endVal, width)
+	h := GetOrRegisterFixedFHistogram("histogram", r, startVal, endVal, width)
 	h.AddLabelPrefix("le_")
 	h.SetNameTotal("req_total")
 	h.Add(19)
@@ -185,7 +185,7 @@ func TestFFixedHistogram_Snapshot(t *testing.T) {
 		t.Errorf("h.Snapshot().Labels() = %v, want %v", got.Labels(), h.Labels())
 	}
 	if got.NameTotal() != h.NameTotal() {
-		t.Errorf("NewFFixedHistogram() total = %q, want %q", got.NameTotal(), h.NameTotal())
+		t.Errorf("NewFixedFHistogram() total = %q, want %q", got.NameTotal(), h.NameTotal())
 	}
 	if !reflect.DeepEqual(h.Weights(), got.Weights()) {
 		t.Errorf("h.Snapshot().Weights() = %v, want %v", got.Weights(), h.Weights())
@@ -195,7 +195,7 @@ func TestFFixedHistogram_Snapshot(t *testing.T) {
 	}
 }
 
-func TestNewFVHistogram(t *testing.T) {
+func TestNewFUHistogram(t *testing.T) {
 	tests := []struct {
 		weights            []float64
 		labels             []string
@@ -231,7 +231,7 @@ func TestNewFVHistogram(t *testing.T) {
 	}
 	for i, tt := range tests {
 		t.Run("#"+strconv.Itoa(i), func(t *testing.T) {
-			got := NewFVHistogram(tt.weights, tt.labels)
+			got := NewFUHistogram(tt.weights, tt.labels)
 			if tt.labelPrefix != "" {
 				got.AddLabelPrefix(tt.labelPrefix)
 			}
@@ -239,30 +239,30 @@ func TestNewFVHistogram(t *testing.T) {
 				got.SetNameTotal(tt.total)
 			}
 			if !reflect.DeepEqual(got.weights, tt.wantWeights) {
-				t.Errorf("NewFVHistogram() weights = %+v, want %+v", got.weights, tt.wantWeights)
+				t.Errorf("NewFUHistogram() weights = %+v, want %+v", got.weights, tt.wantWeights)
 			}
 			if !reflect.DeepEqual(got.WeightsAliases(), tt.wantWeightsAliases) {
 				t.Errorf("NewFixedHistogram() weightsAliases =\n%q\nwant\n%q", got.WeightsAliases(), tt.wantWeightsAliases)
 			}
 			if !reflect.DeepEqual(got.labels, tt.wantLabels) {
-				t.Errorf("NewFVHistogram() names =\n%q\nwant\n%q", got.labels, tt.wantLabels)
+				t.Errorf("NewFUHistogram() names =\n%q\nwant\n%q", got.labels, tt.wantLabels)
 			}
 			if tt.total == "" {
 				tt.total = ".total"
 			}
 			if got.NameTotal() != tt.total {
-				t.Errorf("NewFVHistogram() total = %q, want %q", got.NameTotal(), tt.total)
+				t.Errorf("NewFUHistogram() total = %q, want %q", got.NameTotal(), tt.total)
 			}
 			if len(got.labels) != len(got.Values()) {
-				t.Errorf("NewFVHistogram() buckets count =%d, want %d", len(got.Values()), len(tt.wantLabels))
+				t.Errorf("NewFUHistogram() buckets count =%d, want %d", len(got.Values()), len(tt.wantLabels))
 			}
 		})
 	}
 }
 
-func TestFVHistogram_Add(t *testing.T) {
+func TestFUHistogram_Add(t *testing.T) {
 	r := NewRegistry()
-	h := GetOrRegisterFVHistogram("histogram", r, []float64{1, 2, 5, 8, 20}, nil)
+	h := GetOrRegisterFUHistogram("histogram", r, []float64{1, 2, 5, 8, 20}, nil)
 	tests := []struct {
 		add  float64
 		want []uint64
@@ -298,8 +298,8 @@ func TestFVHistogram_Add(t *testing.T) {
 	}
 }
 
-func TestFVHistogram_SetNames(t *testing.T) {
-	h := NewFVHistogram([]float64{10, 20.1, 50.34, 80.785, 100}, nil)
+func TestFUHistogram_SetNames(t *testing.T) {
+	h := NewFUHistogram([]float64{10, 20.1, 50.34, 80.785, 100}, nil)
 
 	wantLabels := []string{".10", ".20_10", ".50_34", ".80_78", ".100", ".inf"}
 	weightsAliases := []string{"10", "20_10", "50_34", "80_78", "100", "inf"}
@@ -342,8 +342,8 @@ func TestFVHistogram_SetNames(t *testing.T) {
 	}
 }
 
-func TestFVHistogram_Snapshot(t *testing.T) {
-	h := NewFVHistogram([]float64{10, 20, 50, 80, 100}, nil)
+func TestFUHistogram_Snapshot(t *testing.T) {
+	h := NewFUHistogram([]float64{10, 20, 50, 80, 100}, nil)
 	h.Add(19)
 	got := h.Snapshot()
 	want := []uint64{0, 1, 0, 0, 0, 0}
@@ -354,7 +354,7 @@ func TestFVHistogram_Snapshot(t *testing.T) {
 		t.Errorf("h.Snapshot().Labels() = %v, want %v", got.Labels(), h.Labels())
 	}
 	if got.NameTotal() != h.NameTotal() {
-		t.Errorf("NewFFixedHistogram() total = %q, want %q", got.NameTotal(), h.NameTotal())
+		t.Errorf("NewFixedFHistogram() total = %q, want %q", got.NameTotal(), h.NameTotal())
 	}
 	if !reflect.DeepEqual(h.Weights(), got.Weights()) {
 		t.Errorf("h.Snapshot().Weights() = %v, want %v", got.Weights(), h.Weights())
@@ -364,24 +364,24 @@ func TestFVHistogram_Snapshot(t *testing.T) {
 	}
 }
 
-func BenchmarkFFixedHistogram(b *testing.B) {
-	h := NewFFixedHistogram(10, 100, 10)
+func BenchmarkFixedFHistogram(b *testing.B) {
+	h := NewFixedFHistogram(10, 100, 10)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		h.Add(50)
 	}
 }
 
-func BenchmarkFVHistogram05(b *testing.B) {
-	h := NewFVHistogram([]float64{10, 50, 100, 200, 300}, nil)
+func BenchmarkFUHistogram05(b *testing.B) {
+	h := NewFUHistogram([]float64{10, 50, 100, 200, 300}, nil)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		h.Add(50)
 	}
 }
 
-func BenchmarkFVHistogram20(b *testing.B) {
-	h := NewFVHistogram(
+func BenchmarkFUHistogram20(b *testing.B) {
+	h := NewFUHistogram(
 		[]float64{10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800},
 		nil)
 	b.ResetTimer()
@@ -390,8 +390,8 @@ func BenchmarkFVHistogram20(b *testing.B) {
 	}
 }
 
-func BenchmarkFVHistogram100(b *testing.B) {
-	h := NewFVHistogram(
+func BenchmarkFUHistogram100(b *testing.B) {
+	h := NewFUHistogram(
 		[]float64{
 			10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800,
 			1900, 2000, 2100, 2200, 2300, 2400, 2500, 2600, 2700, 2800, 2900, 3000, 3100, 3200, 3300, 3400, 3500, 3600, 3700, 3800,
@@ -405,8 +405,8 @@ func BenchmarkFVHistogram100(b *testing.B) {
 	}
 }
 
-func BenchmarkFFixedHistogram_Values(b *testing.B) {
-	h := NewFFixedHistogram(10, 100, 10)
+func BenchmarkFixedFHistogram_Values(b *testing.B) {
+	h := NewFixedFHistogram(10, 100, 10)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		h.Add(50)
@@ -414,8 +414,8 @@ func BenchmarkFFixedHistogram_Values(b *testing.B) {
 	}
 }
 
-func BenchmarkFVHistogram05_Values(b *testing.B) {
-	h := NewFVHistogram([]float64{10, 50, 100, 200, 300}, nil)
+func BenchmarkFUHistogram05_Values(b *testing.B) {
+	h := NewFUHistogram([]float64{10, 50, 100, 200, 300}, nil)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		h.Add(50)
@@ -423,8 +423,8 @@ func BenchmarkFVHistogram05_Values(b *testing.B) {
 	}
 }
 
-func BenchmarkFVHistogram20_Values(b *testing.B) {
-	h := NewFVHistogram(
+func BenchmarkFUHistogram20_Values(b *testing.B) {
+	h := NewFUHistogram(
 		[]float64{10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800},
 		nil)
 	b.ResetTimer()
@@ -434,8 +434,8 @@ func BenchmarkFVHistogram20_Values(b *testing.B) {
 	}
 }
 
-func BenchmarkFVHistogram100_Values(b *testing.B) {
-	h := NewFVHistogram(
+func BenchmarkFUHistogram100_Values(b *testing.B) {
+	h := NewFUHistogram(
 		[]float64{
 			10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800,
 			1900, 2000, 2100, 2200, 2300, 2400, 2500, 2600, 2700, 2800, 2900, 3000, 3100, 3200, 3300, 3400, 3500, 3600, 3700, 3800,

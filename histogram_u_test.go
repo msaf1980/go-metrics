@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestNewUFixedHistogram(t *testing.T) {
+func TestNewFixedUHistogram(t *testing.T) {
 	tests := []struct {
 		startVal           uint64
 		endVal             uint64
@@ -40,7 +40,7 @@ func TestNewUFixedHistogram(t *testing.T) {
 	}
 	for i, tt := range tests {
 		t.Run("#"+strconv.Itoa(i), func(t *testing.T) {
-			got := NewUFixedHistogram(tt.startVal, tt.endVal, tt.width)
+			got := NewFixedUHistogram(tt.startVal, tt.endVal, tt.width)
 			if tt.labelPrefix != "" {
 				got.AddLabelPrefix(tt.labelPrefix)
 			}
@@ -48,33 +48,33 @@ func TestNewUFixedHistogram(t *testing.T) {
 				got.SetNameTotal(tt.total)
 			}
 			if !reflect.DeepEqual(got.Weights(), tt.wantWeights) {
-				t.Errorf("NewUFixedHistogram() weights = %+v, want %+v", got.Weights(), tt.wantWeights)
+				t.Errorf("NewFixedUHistogram() weights = %+v, want %+v", got.Weights(), tt.wantWeights)
 			}
 			if !reflect.DeepEqual(got.WeightsAliases(), tt.wantWeightsAliases) {
 				t.Errorf("NewFixedHistogram() weightsAliases =\n%q\nwant\n%q", got.WeightsAliases(), tt.wantWeightsAliases)
 			}
 			if !reflect.DeepEqual(got.Labels(), tt.wantLabels) {
-				t.Errorf("NewUFixedHistogram() names =\n%q\nwant\n%q", got.Labels(), tt.wantLabels)
+				t.Errorf("NewFixedUHistogram() names =\n%q\nwant\n%q", got.Labels(), tt.wantLabels)
 			}
 			if tt.total == "" {
 				tt.total = ".total"
 			}
 			if got.NameTotal() != tt.total {
-				t.Errorf("NewUFixedHistogram() total = %q, want %q", got.NameTotal(), tt.total)
+				t.Errorf("NewFixedUHistogram() total = %q, want %q", got.NameTotal(), tt.total)
 			}
 			if len(got.Labels()) != len(got.Values()) {
-				t.Errorf("NewUFixedHistogram() buckets count =%d, want %d", len(got.Labels()), len(got.Values()))
+				t.Errorf("NewFixedUHistogram() buckets count =%d, want %d", len(got.Labels()), len(got.Values()))
 			}
 		})
 	}
 }
 
-func TestUFixedHistogram_Add(t *testing.T) {
+func TestFixedUHistogram_Add(t *testing.T) {
 	startVal := uint64(10)
 	width := uint64(10)
 	endVal := uint64(50)
 	r := NewRegistry()
-	h := GetOrRegisterUFixedHistogram("histogram", r, startVal, endVal, width)
+	h := GetOrRegisterFixedUHistogram("histogram", r, startVal, endVal, width)
 	tests := []struct {
 		add  uint64
 		want []uint64
@@ -107,11 +107,11 @@ func TestUFixedHistogram_Add(t *testing.T) {
 	}
 }
 
-func TestUFixedHistogram_SetNames(t *testing.T) {
+func TestFixedUHistogram_SetNames(t *testing.T) {
 	startVal := uint64(10)
 	width := uint64(10)
 	endVal := uint64(50)
-	h := NewUFixedHistogram(startVal, endVal, width)
+	h := NewFixedUHistogram(startVal, endVal, width)
 
 	wantLabels := []string{".10", ".20", ".30", ".40", ".50", ".inf"}
 	weightsAliases := []string{"10", "20", "30", "40", "50", "inf"}
@@ -154,11 +154,11 @@ func TestUFixedHistogram_SetNames(t *testing.T) {
 	}
 }
 
-func TestUFixedHistogram_Snapshot(t *testing.T) {
+func TestFixedUHistogram_Snapshot(t *testing.T) {
 	startVal := uint64(10)
 	width := uint64(10)
 	endVal := uint64(50)
-	h := NewUFixedHistogram(startVal, endVal, width)
+	h := NewFixedUHistogram(startVal, endVal, width)
 	h.AddLabelPrefix("le_")
 	h.SetNameTotal("req_total")
 	h.Add(19)
@@ -171,7 +171,7 @@ func TestUFixedHistogram_Snapshot(t *testing.T) {
 		t.Errorf("h.Snapshot().Labels() = %v, want %v", got.Labels(), h.Labels())
 	}
 	if got.NameTotal() != h.NameTotal() {
-		t.Errorf("NewUFixedHistogram() total = %q, want %q", got.NameTotal(), h.NameTotal())
+		t.Errorf("NewFixedUHistogram() total = %q, want %q", got.NameTotal(), h.NameTotal())
 	}
 	if !reflect.DeepEqual(h.Weights(), got.Weights()) {
 		t.Errorf("h.Snapshot().Weights() = %v, want %v", got.Weights(), h.Weights())
@@ -181,7 +181,28 @@ func TestUFixedHistogram_Snapshot(t *testing.T) {
 	}
 }
 
-func TestNewVFixedHistogram(t *testing.T) {
+func TestInvalidVUHistogram(t *testing.T) {
+	tests := []struct {
+		weights []uint64
+	}{
+		{weights: []uint64{1, 1, 2, 3}},
+		{weights: []uint64{1, 2, 2, 3}},
+		{weights: []uint64{1, 2, 3, 3}},
+		{weights: []uint64{1, 0, 2, 3}},
+	}
+	for i, tt := range tests {
+		t.Run("#"+strconv.Itoa(i), func(t *testing.T) {
+			defer func() {
+				if r := recover(); r == nil {
+					t.Fatal("must panic")
+				}
+			}()
+			_ = NewVUHistogram(tt.weights, nil)
+		})
+	}
+}
+
+func TestNewVUHistogram(t *testing.T) {
 	tests := []struct {
 		weights            []uint64
 		names              []string
@@ -217,7 +238,7 @@ func TestNewVFixedHistogram(t *testing.T) {
 	}
 	for i, tt := range tests {
 		t.Run("#"+strconv.Itoa(i), func(t *testing.T) {
-			got := NewUVHistogram(tt.weights, tt.names)
+			got := NewVUHistogram(tt.weights, tt.names)
 			if tt.labelPrefix != "" {
 				got.AddLabelPrefix(tt.labelPrefix)
 			}
@@ -225,30 +246,30 @@ func TestNewVFixedHistogram(t *testing.T) {
 				got.SetNameTotal(tt.total)
 			}
 			if !reflect.DeepEqual(got.weights, tt.wantWeights) {
-				t.Errorf("NewUVHistogram() weights = %+v, want %+v", got.weights, tt.wantWeights)
+				t.Errorf("NewVUHistogram() weights = %+v, want %+v", got.weights, tt.wantWeights)
 			}
 			if !reflect.DeepEqual(got.WeightsAliases(), tt.wantWeightsAliases) {
 				t.Errorf("NewFixedHistogram() weightsAliases =\n%q\nwant\n%q", got.WeightsAliases(), tt.wantWeightsAliases)
 			}
 			if !reflect.DeepEqual(got.labels, tt.wantLabels) {
-				t.Errorf("NewUVHistogram() names =\n%q\nwant\n%q", got.labels, tt.wantLabels)
+				t.Errorf("NewVUHistogram() names =\n%q\nwant\n%q", got.labels, tt.wantLabels)
 			}
 			if tt.total == "" {
 				tt.total = ".total"
 			}
 			if got.NameTotal() != tt.total {
-				t.Errorf("NewUVHistogram() total = %q, want %q", got.NameTotal(), tt.total)
+				t.Errorf("NewVUHistogram() total = %q, want %q", got.NameTotal(), tt.total)
 			}
 			if len(got.labels) != len(got.Values()) {
-				t.Errorf("NewUVHistogram() buckets count =%d, want %d", len(got.Values()), len(tt.wantLabels))
+				t.Errorf("NewVUHistogram() buckets count =%d, want %d", len(got.Values()), len(tt.wantLabels))
 			}
 		})
 	}
 }
 
-func TestUVHistogram_Add(t *testing.T) {
+func TestVUHistogram_Add(t *testing.T) {
 	r := NewRegistry()
-	h := GetOrRegisterUVHistogram("histogram", r, []uint64{1, 2, 5, 8, 20}, nil)
+	h := GetOrRegisterVUHistogram("histogram", r, []uint64{1, 2, 5, 8, 20}, nil)
 	tests := []struct {
 		add  uint64
 		want []uint64
@@ -284,8 +305,8 @@ func TestUVHistogram_Add(t *testing.T) {
 	}
 }
 
-func TestUVHistogram_SetNames(t *testing.T) {
-	h := NewUVHistogram([]uint64{10, 20, 50, 80, 100}, nil)
+func TestVUHistogram_SetNames(t *testing.T) {
+	h := NewVUHistogram([]uint64{10, 20, 50, 80, 100}, nil)
 
 	wantLabels := []string{".10", ".20", ".50", ".80", ".100", ".inf"}
 	weightsAliases := []string{"10", "20", "50", "80", "100", "inf"}
@@ -328,8 +349,8 @@ func TestUVHistogram_SetNames(t *testing.T) {
 	}
 }
 
-func TestUVHistogram_Snapshot(t *testing.T) {
-	h := NewUVHistogram([]uint64{10, 20, 50, 80, 100}, nil)
+func TestVUHistogram_Snapshot(t *testing.T) {
+	h := NewVUHistogram([]uint64{10, 20, 50, 80, 100}, nil)
 	h.Add(19)
 	got := h.Snapshot()
 	want := []uint64{0, 1, 0, 0, 0, 0}
@@ -350,24 +371,24 @@ func TestUVHistogram_Snapshot(t *testing.T) {
 	}
 }
 
-func BenchmarkUFixedHistogram(b *testing.B) {
-	h := NewUFixedHistogram(10, 100, 10)
+func BenchmarkFixedUHistogram(b *testing.B) {
+	h := NewFixedUHistogram(10, 100, 10)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		h.Add(50)
 	}
 }
 
-func BenchmarkUVHistogram05(b *testing.B) {
-	h := NewUVHistogram([]uint64{10, 50, 100, 200, 300}, nil)
+func BenchmarkVUHistogram05(b *testing.B) {
+	h := NewVUHistogram([]uint64{10, 50, 100, 200, 300}, nil)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		h.Add(50)
 	}
 }
 
-func BenchmarkUVHistogram20(b *testing.B) {
-	h := NewUVHistogram(
+func BenchmarkVUHistogram20(b *testing.B) {
+	h := NewVUHistogram(
 		[]uint64{10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800},
 		nil)
 	b.ResetTimer()
@@ -376,8 +397,8 @@ func BenchmarkUVHistogram20(b *testing.B) {
 	}
 }
 
-func BenchmarkUVHistogram100(b *testing.B) {
-	h := NewUVHistogram(
+func BenchmarkVUHistogram100(b *testing.B) {
+	h := NewVUHistogram(
 		[]uint64{
 			10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800,
 			1900, 2000, 2100, 2200, 2300, 2400, 2500, 2600, 2700, 2800, 2900, 3000, 3100, 3200, 3300, 3400, 3500, 3600, 3700, 3800,
@@ -391,8 +412,8 @@ func BenchmarkUVHistogram100(b *testing.B) {
 	}
 }
 
-func BenchmarkUFixedHistogram_Values(b *testing.B) {
-	h := NewUFixedHistogram(10, 100, 10)
+func BenchmarkFixedUHistogram_Values(b *testing.B) {
+	h := NewFixedUHistogram(10, 100, 10)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		h.Add(50)
@@ -400,8 +421,8 @@ func BenchmarkUFixedHistogram_Values(b *testing.B) {
 	}
 }
 
-func BenchmarkUVHistogram05_Values(b *testing.B) {
-	h := NewUVHistogram([]uint64{10, 50, 100, 200, 300}, nil)
+func BenchmarkVUHistogram05_Values(b *testing.B) {
+	h := NewVUHistogram([]uint64{10, 50, 100, 200, 300}, nil)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		h.Add(50)
@@ -409,8 +430,8 @@ func BenchmarkUVHistogram05_Values(b *testing.B) {
 	}
 }
 
-func BenchmarkUVHistogram20_Values(b *testing.B) {
-	h := NewUVHistogram(
+func BenchmarkVUHistogram20_Values(b *testing.B) {
+	h := NewVUHistogram(
 		[]uint64{10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800},
 		nil)
 	b.ResetTimer()
@@ -420,8 +441,8 @@ func BenchmarkUVHistogram20_Values(b *testing.B) {
 	}
 }
 
-func BenchmarkUVHistogram100_Values(b *testing.B) {
-	h := NewUVHistogram(
+func BenchmarkVUHistogram100_Values(b *testing.B) {
+	h := NewVUHistogram(
 		[]uint64{
 			10, 50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700, 1800,
 			1900, 2000, 2100, 2200, 2300, 2400, 2500, 2600, 2700, 2800, 2900, 3000, 3100, 3200, 3300, 3400, 3500, 3600, 3700, 3800,

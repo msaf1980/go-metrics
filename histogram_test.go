@@ -186,6 +186,27 @@ func TestFixedHistogram_Snapshot(t *testing.T) {
 	}
 }
 
+func TestInvalidVHistogram(t *testing.T) {
+	tests := []struct {
+		weights []int64
+	}{
+		{weights: []int64{1, 1, 2, 3}},
+		{weights: []int64{1, 2, 2, 3}},
+		{weights: []int64{1, 2, 3, 3}},
+		{weights: []int64{1, 0, 2, 3}},
+	}
+	for i, tt := range tests {
+		t.Run("#"+strconv.Itoa(i), func(t *testing.T) {
+			defer func() {
+				if r := recover(); r == nil {
+					t.Fatal("must panic")
+				}
+			}()
+			_ = NewVHistogram(tt.weights, nil)
+		})
+	}
+}
+
 func TestNewVHistogram(t *testing.T) {
 	tests := []struct {
 		weights            []int64

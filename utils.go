@@ -14,6 +14,54 @@ func Min(a, b int) int {
 	return b
 }
 
+func IsSortedSliceInt64Ge(a []int64) (sorted bool) {
+	if len(a) == 0 {
+		return
+	}
+	sorted = true
+	prev := a[0]
+	for i := 1; i < len(a); i++ {
+		if a[i] <= prev {
+			sorted = false
+			break
+		}
+		prev = a[i]
+	}
+	return
+}
+
+func IsSortedSliceUint64Ge(a []uint64) (sorted bool) {
+	if len(a) == 0 {
+		return
+	}
+	sorted = true
+	prev := a[0]
+	for i := 1; i < len(a); i++ {
+		if a[i] <= prev {
+			sorted = false
+			break
+		}
+		prev = a[i]
+	}
+	return
+}
+
+func IsSortedSliceFloat64Ge(a []float64) (sorted bool) {
+	if len(a) == 0 {
+		return
+	}
+	sorted = true
+	prev := a[0]
+	for i := 1; i < len(a); i++ {
+		if a[i] <= prev {
+			sorted = false
+			break
+		}
+		prev = a[i]
+	}
+	return
+}
+
 func searchInt64Ge(a []int64, v int64) int {
 	if v <= a[0] {
 		return 0

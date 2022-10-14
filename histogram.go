@@ -1,8 +1,8 @@
 package metrics
 
 import (
+	"errors"
 	"math"
-	"sort"
 	"strconv"
 	"strings"
 	"sync"
@@ -368,11 +368,15 @@ type VHistogram struct {
 	HistogramStorage
 }
 
+var ErrUnsortedWeights = errors.New("unsorted weights")
+
 func NewVHistogram(weights []int64, labels []string) *VHistogram {
+	if !IsSortedSliceInt64Ge(weights) {
+		panic(ErrUnsortedWeights)
+	}
 	w := make([]int64, len(weights)+1)
 	weightsAliases := make([]string, len(w))
 	copy(w, weights)
-	sort.Slice(w[:len(weights)-1], func(i, j int) bool { return w[i] < w[j] })
 	// last := w[len(w)-2] + 1
 	lbls := make([]string, len(w))
 

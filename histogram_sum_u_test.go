@@ -182,6 +182,27 @@ func TestFixedSumUHistogram_Snapshot(t *testing.T) {
 	}
 }
 
+func TestInvalidVSumUHistogram(t *testing.T) {
+	tests := []struct {
+		weights []uint64
+	}{
+		{weights: []uint64{1, 1, 2, 3}},
+		{weights: []uint64{1, 2, 2, 3}},
+		{weights: []uint64{1, 2, 3, 3}},
+		{weights: []uint64{1, 0, 2, 3}},
+	}
+	for i, tt := range tests {
+		t.Run("#"+strconv.Itoa(i), func(t *testing.T) {
+			defer func() {
+				if r := recover(); r == nil {
+					t.Fatal("must panic")
+				}
+			}()
+			_ = NewVSumUHistogram(tt.weights, nil)
+		})
+	}
+}
+
 func TestNewVSumUHistogram(t *testing.T) {
 	tests := []struct {
 		weights            []uint64

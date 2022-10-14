@@ -235,10 +235,10 @@ func BenchmarkVHistogramT(b *testing.B) {
 	wg.Wait()
 }
 
-func BenchmarkFVHistogram(b *testing.B) {
+func BenchmarkFUHistogram(b *testing.B) {
 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	h := metrics.NewFVHistogram([]float64{10, 50, 100, 200, 300}, nil)
+	h := metrics.NewFUHistogram([]float64{10, 50, 100, 200, 300}, nil)
 	if err := r.Register("histogram", h); err != nil {
 		l.Close()
 		wg.Wait()
@@ -261,10 +261,10 @@ func BenchmarkFVHistogram(b *testing.B) {
 	wg.Wait()
 }
 
-func BenchmarkFVHistogramT(b *testing.B) {
+func BenchmarkFUHistogramT(b *testing.B) {
 	_, l, r, cfg, wg := newBenchServer(b, "foobar")
 
-	h := metrics.NewFVHistogram([]float64{10, 50, 100, 200, 300}, nil)
+	h := metrics.NewFUHistogram([]float64{10, 50, 100, 200, 300}, nil)
 	if err := r.RegisterT("histogram", map[string]string{"tag1": "value1", "tag21": "value21"}, h); err != nil {
 		l.Close()
 		wg.Wait()

@@ -36,7 +36,7 @@ func TestExp(t *testing.T) {
 	gf := metrics.GetOrRegisterFGauge("fgauge", r)
 	gf.Update(1.1)
 
-	h := metrics.NewUFixedHistogram(1, 3, 1).AddLabelPrefix("req_")
+	h := metrics.NewFixedUHistogram(1, 3, 1).AddLabelPrefix("req_")
 	h.Add(2)
 	if err := r.Register("histogram", h); err != nil {
 		t.Fatal(err)
