@@ -113,6 +113,46 @@ func trimFloatZero(f string) string {
 	return f[:d]
 }
 
+type NilFHistogram struct{}
+
+func (NilFHistogram) Values() []uint64 {
+	return nil
+}
+
+func (NilFHistogram) Labels() []string {
+	return nil
+}
+
+func (NilFHistogram) SetLabels([]string) FHistogram { return NilFHistogram{} }
+
+func (NilFHistogram) AddLabelPrefix(string) FHistogram { return NilFHistogram{} }
+
+func (NilFHistogram) SetNameTotal(string) FHistogram { return NilFHistogram{} }
+
+func (NilFHistogram) NameTotal() string { return "total" }
+
+func (NilFHistogram) Weights() []float64 {
+	return nil
+}
+
+func (NilFHistogram) WeightsAliases() []string {
+	return nil
+}
+
+func (h NilFHistogram) Interface() HistogramInterface {
+	return h
+}
+
+func (h NilFHistogram) Add(v float64) {}
+
+func (h NilFHistogram) Clear() []uint64 {
+	return nil
+}
+
+func (NilFHistogram) Snapshot() FHistogram { return NilFHistogram{} }
+
+func (NilFHistogram) IsSummed() bool { return false }
+
 type FHistogramSnapshot struct {
 	weights        []float64 // Sorted weights, by <=
 	weightsAliases []string
@@ -264,6 +304,9 @@ type FixedFHistogram struct {
 }
 
 func NewFixedFHistogram(startVal, endVal, width float64) FHistogram {
+	if UseNilMetrics {
+		return NilFHistogram{}
+	}
 	if endVal < startVal {
 		startVal, endVal = endVal, startVal
 	}
@@ -353,7 +396,10 @@ type FUHistogram struct {
 	FHistogramStorage
 }
 
-func NewFUHistogram(weights []float64, names []string) *FUHistogram {
+func NewFUHistogram(weights []float64, names []string) FHistogram {
+	if UseNilMetrics {
+		return NilFHistogram{}
+	}
 	if !IsSortedSliceFloat64Ge(weights) {
 		panic(ErrUnsortedWeights)
 	}

@@ -100,6 +100,46 @@ func NewRegisteredVUHistogramT(name string, tagsMap map[string]string, r Registr
 	return h
 }
 
+type NilUHistogram struct{}
+
+func (NilUHistogram) Values() []uint64 {
+	return nil
+}
+
+func (NilUHistogram) Labels() []string {
+	return nil
+}
+
+func (NilUHistogram) SetLabels([]string) UHistogram { return NilUHistogram{} }
+
+func (NilUHistogram) AddLabelPrefix(string) UHistogram { return NilUHistogram{} }
+
+func (NilUHistogram) SetNameTotal(string) UHistogram { return NilUHistogram{} }
+
+func (NilUHistogram) NameTotal() string { return "total" }
+
+func (NilUHistogram) Weights() []uint64 {
+	return nil
+}
+
+func (NilUHistogram) WeightsAliases() []string {
+	return nil
+}
+
+func (h NilUHistogram) Interface() HistogramInterface {
+	return h
+}
+
+func (h NilUHistogram) Add(v uint64) {}
+
+func (h NilUHistogram) Clear() []uint64 {
+	return nil
+}
+
+func (NilUHistogram) Snapshot() UHistogram { return NilUHistogram{} }
+
+func (NilUHistogram) IsSummed() bool { return false }
+
 type UHistogramSnapshot struct {
 	weights        []uint64 // Sorted weights, by <=
 	weightsAliases []string
@@ -251,7 +291,10 @@ type FixedUHistogram struct {
 	width uint64
 }
 
-func NewFixedUHistogram(startVal, endVal, width uint64) *FixedUHistogram {
+func NewFixedUHistogram(startVal, endVal, width uint64) UHistogram {
+	if UseNilMetrics {
+		return NilUHistogram{}
+	}
 	if endVal < startVal {
 		startVal, endVal = endVal, startVal
 	}
@@ -330,7 +373,10 @@ type VUHistogram struct {
 	UHistogramStorage
 }
 
-func NewVUHistogram(weights []uint64, labels []string) *VUHistogram {
+func NewVUHistogram(weights []uint64, labels []string) UHistogram {
+	if UseNilMetrics {
+		return NilUHistogram{}
+	}
 	if !IsSortedSliceUint64Ge(weights) {
 		panic(ErrUnsortedWeights)
 	}

@@ -226,14 +226,14 @@ func TestNewVSumFHistogram(t *testing.T) {
 			if tt.total != "" {
 				got.SetNameTotal(tt.total)
 			}
-			if !reflect.DeepEqual(got.weights, tt.wantWeights) {
-				t.Errorf("NewVSumFHistogram() weights = %+v, want %+v", got.weights, tt.wantWeights)
+			if !reflect.DeepEqual(got.Weights(), tt.wantWeights) {
+				t.Errorf("NewVSumFHistogram() weights = %+v, want %+v", got.Weights(), tt.wantWeights)
 			}
 			if !reflect.DeepEqual(got.WeightsAliases(), tt.wantWeightsAliases) {
 				t.Errorf("NewFixedSumFHistogram() weightsAliases =\n%q\nwant\n%q", got.WeightsAliases(), tt.wantWeightsAliases)
 			}
-			if !reflect.DeepEqual(got.labels, tt.wantLabels) {
-				t.Errorf("NewVSumFHistogram() names =\n%q\nwant\n%q", got.labels, tt.wantLabels)
+			if !reflect.DeepEqual(got.Labels(), tt.wantLabels) {
+				t.Errorf("NewVSumFHistogram() names =\n%q\nwant\n%q", got.Labels(), tt.wantLabels)
 			}
 			if tt.total == "" {
 				tt.total = ".total"
@@ -241,7 +241,7 @@ func TestNewVSumFHistogram(t *testing.T) {
 			if got.NameTotal() != tt.total {
 				t.Errorf("NewVSumFHistogram() total = %q, want %q", got.NameTotal(), tt.total)
 			}
-			if len(got.labels) != len(got.Values()) {
+			if len(got.Labels()) != len(got.Values()) {
 				t.Errorf("NewVSumFHistogram() buckets count =%d, want %d", len(got.Values()), len(tt.wantLabels))
 			}
 		})
