@@ -437,7 +437,7 @@ func (h *VUHistogram) Snapshot() UHistogram {
 }
 
 func (h *VUHistogram) Add(v uint64) {
-	n := searchUint64Ge(h.weights, v)
+	n := SearchUint64Ge(h.weights, v)
 	h.lock.Lock()
 	h.buckets[n]++
 	h.lock.Unlock()

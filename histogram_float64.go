@@ -460,7 +460,7 @@ func (h *FUHistogram) Snapshot() FHistogram {
 }
 
 func (h *FUHistogram) Add(v float64) {
-	n := searchFloat64Ge(h.weights, v)
+	n := SearchFloat64Ge(h.weights, v)
 	h.lock.Lock()
 	h.buckets[n]++
 	h.lock.Unlock()

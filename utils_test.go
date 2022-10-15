@@ -36,7 +36,7 @@ func Test_searchInt64Ge(t *testing.T) {
 	}
 	for i, tt := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			if got := searchInt64Ge(tt.a, tt.v); got != tt.want {
+			if got := SearchInt64Ge(tt.a, tt.v); got != tt.want {
 				t.Errorf("searchUint64Ge(%+v, %d) = %v, want %v", tt.a, tt.v, got, tt.want)
 			}
 		})
@@ -71,7 +71,7 @@ func Test_searchUint64Ge(t *testing.T) {
 	}
 	for i, tt := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			if got := searchUint64Ge(tt.a, tt.v); got != tt.want {
+			if got := SearchUint64Ge(tt.a, tt.v); got != tt.want {
 				t.Errorf("searchUint64Ge(%+v, %d) = %v, want %v", tt.a, tt.v, got, tt.want)
 			}
 		})
@@ -108,7 +108,7 @@ func Test_searchFloat64Ge(t *testing.T) {
 	}
 	for i, tt := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			if got := searchFloat64Ge(tt.a, tt.v); got != tt.want {
+			if got := SearchFloat64Ge(tt.a, tt.v); got != tt.want {
 				t.Errorf("searchFloat64Ge(%+v, %v) = %v, want %v", tt.a, tt.v, got, tt.want)
 			}
 		})

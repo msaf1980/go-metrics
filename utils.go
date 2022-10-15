@@ -62,7 +62,7 @@ func IsSortedSliceFloat64Ge(a []float64) (sorted bool) {
 	return
 }
 
-func searchInt64Ge(a []int64, v int64) int {
+func SearchInt64Ge(a []int64, v int64) int {
 	if v <= a[0] {
 		return 0
 	}
@@ -84,7 +84,7 @@ func searchInt64Ge(a []int64, v int64) int {
 	return end
 }
 
-func searchUint64Ge(a []uint64, v uint64) int {
+func SearchUint64Ge(a []uint64, v uint64) int {
 	if v <= a[0] {
 		return 0
 	}
@@ -106,7 +106,7 @@ func searchUint64Ge(a []uint64, v uint64) int {
 	return end
 }
 
-func searchFloat64Ge(a []float64, v float64) int {
+func SearchFloat64Ge(a []float64, v float64) int {
 	if v <= a[0] {
 		return 0
 	}
