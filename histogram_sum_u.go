@@ -235,7 +235,7 @@ type VSumUHistogram struct {
 }
 
 func NewVSumUHistogram(weights []uint64, names []string) *VSumUHistogram {
-	if !IsSortedSliceUint64Ge(weights) {
+	if !IsSortedSliceUint64Le(weights) {
 		panic(ErrUnsortedWeights)
 	}
 	w := make([]uint64, len(weights)+1)

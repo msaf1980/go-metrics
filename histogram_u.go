@@ -377,7 +377,7 @@ func NewVUHistogram(weights []uint64, labels []string) UHistogram {
 	if UseNilMetrics {
 		return NilUHistogram{}
 	}
-	if !IsSortedSliceUint64Ge(weights) {
+	if !IsSortedSliceUint64Le(weights) {
 		panic(ErrUnsortedWeights)
 	}
 	w := make([]uint64, len(weights)+1)
@@ -437,7 +437,7 @@ func (h *VUHistogram) Snapshot() UHistogram {
 }
 
 func (h *VUHistogram) Add(v uint64) {
-	n := SearchUint64Ge(h.weights, v)
+	n := SearchUint64Le(h.weights, v)
 	h.lock.Lock()
 	h.buckets[n]++
 	h.lock.Unlock()

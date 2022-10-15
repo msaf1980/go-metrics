@@ -243,7 +243,7 @@ type VSumFHistogram struct {
 }
 
 func NewVSumFHistogram(weights []float64, names []string) *VSumFHistogram {
-	if !IsSortedSliceFloat64Ge(weights) {
+	if !IsSortedSliceFloat64Le(weights) {
 		panic(ErrUnsortedWeights)
 	}
 	w := make([]float64, len(weights)+1)

@@ -400,7 +400,7 @@ func NewFUHistogram(weights []float64, names []string) FHistogram {
 	if UseNilMetrics {
 		return NilFHistogram{}
 	}
-	if !IsSortedSliceFloat64Ge(weights) {
+	if !IsSortedSliceFloat64Le(weights) {
 		panic(ErrUnsortedWeights)
 	}
 	w := make([]float64, len(weights)+1)
@@ -460,7 +460,7 @@ func (h *FUHistogram) Snapshot() FHistogram {
 }
 
 func (h *FUHistogram) Add(v float64) {
-	n := SearchFloat64Ge(h.weights, v)
+	n := SearchFloat64Le(h.weights, v)
 	h.lock.Lock()
 	h.buckets[n]++
 	h.lock.Unlock()

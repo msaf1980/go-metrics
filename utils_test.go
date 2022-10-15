@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func Test_searchInt64Ge(t *testing.T) {
+func Test_searchInt64Le(t *testing.T) {
 	tests := []struct {
 		a    []int64
 		v    int64
@@ -36,14 +36,14 @@ func Test_searchInt64Ge(t *testing.T) {
 	}
 	for i, tt := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			if got := SearchInt64Ge(tt.a, tt.v); got != tt.want {
+			if got := SearchInt64Le(tt.a, tt.v); got != tt.want {
 				t.Errorf("searchUint64Ge(%+v, %d) = %v, want %v", tt.a, tt.v, got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_searchUint64Ge(t *testing.T) {
+func Test_searchUint64Le(t *testing.T) {
 	tests := []struct {
 		a    []uint64
 		v    uint64
@@ -71,14 +71,14 @@ func Test_searchUint64Ge(t *testing.T) {
 	}
 	for i, tt := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			if got := SearchUint64Ge(tt.a, tt.v); got != tt.want {
+			if got := SearchUint64Le(tt.a, tt.v); got != tt.want {
 				t.Errorf("searchUint64Ge(%+v, %d) = %v, want %v", tt.a, tt.v, got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_searchFloat64Ge(t *testing.T) {
+func Test_searchFloat64Le(t *testing.T) {
 	tests := []struct {
 		a    []float64
 		v    float64
@@ -108,7 +108,7 @@ func Test_searchFloat64Ge(t *testing.T) {
 	}
 	for i, tt := range tests {
 		t.Run(strconv.Itoa(i), func(t *testing.T) {
-			if got := SearchFloat64Ge(tt.a, tt.v); got != tt.want {
+			if got := SearchFloat64Le(tt.a, tt.v); got != tt.want {
 				t.Errorf("searchFloat64Ge(%+v, %v) = %v, want %v", tt.a, tt.v, got, tt.want)
 			}
 		})

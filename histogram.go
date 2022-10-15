@@ -486,7 +486,7 @@ func (h *VHistogram) Snapshot() Histogram {
 }
 
 func (h *VHistogram) Add(v int64) {
-	n := SearchInt64Ge(h.weights, v)
+	n := SearchInt64Le(h.weights, v)
 	h.lock.Lock()
 	h.buckets[n]++
 	h.lock.Unlock()
